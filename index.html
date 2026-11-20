@@ -88,6 +88,32 @@ input,select{width:100%;padding:11px;border-radius:12px;border:1px solid var(--b
 .timer b{font-size:26px;font-variant-numeric:tabular-nums;flex:1}
 .timer button{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:10px;padding:9px 10px;font-weight:700;font-size:13px}
 .timer-barra{position:absolute;left:0;bottom:0;height:4px;background:#c4b5fd;transition:width .25s linear}
+.proximo{display:flex;align-items:center;gap:12px;border:2px solid var(--pri)}
+.info-prox{flex:1;cursor:pointer}.info-prox b{display:block;font-size:16px;margin-top:2px}
+.play{width:56px;height:56px;border-radius:50%;border:0;background:var(--pri);color:#fff;font-size:22px;flex-shrink:0;box-shadow:0 4px 14px rgba(124,58,237,.35)}
+.escuro .play{color:#1a1027}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border:1px solid var(--borda);border-radius:18px;padding:14px;box-shadow:var(--sombra);cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.tile span{font-size:22px}.tile b{font-size:18px}.tile small{color:var(--txt2);font-size:12.5px}
+.tile.agua{grid-row:span 2;cursor:default}
+.tile .barra{margin:8px 0 10px}
+.agua-btns{display:flex;gap:6px;margin-top:auto}.agua-btns button{flex:1;border:0;border-radius:10px;padding:10px 0;background:var(--pri-claro);color:var(--pri);font-weight:800;font-size:14px}
+.agua-btns button:last-child{flex:2;background:var(--pri);color:#fff}
+.escuro .agua-btns button:last-child{color:#1a1027}
+.sec-titulo{font-weight:800;font-size:15px;margin:6px 2px -4px;color:var(--txt2)}
+.tile em{font-style:normal;font-size:12px;font-weight:700;margin-top:3px}.tile em.bom{color:var(--ok)}.tile em.ruim{color:#ea580c}
+.corrida-painel{text-align:center}
+.corrida-painel .km b{font-size:64px;line-height:1;font-weight:900;color:var(--pri);font-variant-numeric:tabular-nums}.corrida-painel .km span{font-size:20px;font-weight:700;color:var(--txt2);margin-left:6px}
+.run3{margin-top:14px;row-gap:14px}.run3 b{display:block;font-size:20px;font-variant-numeric:tabular-nums}.run3 small{font-size:11.5px;color:var(--txt2)}
+canvas.rota{width:100%;height:200px;display:block;margin-top:6px;background:var(--fundo);border-radius:12px}
+.cmp-l{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:6px;padding:8px 0;border-bottom:1px solid var(--borda);align-items:center;font-size:14px}.cmp-l:last-child{border-bottom:0}
+.cmp-l b{text-align:right}.cmp-l.cab b{font-size:12px}.cmp-l .bom,.bom{color:var(--ok)}.cmp-l .ruim,.ruim{color:#ea580c}
+.frango-palco{position:relative;height:min(46vh,340px);margin:-6px -4px 8px;border-radius:18px;background:radial-gradient(circle at 50% 30%,#ffffff,#e9e4f5 72%);overflow:hidden;touch-action:none}
+.escuro .frango-palco{background:radial-gradient(circle at 50% 30%,#2b2340,#151020 72%)}
+.frango-cv{position:absolute;inset:0;width:100%;height:100%;cursor:grab}
+.frango-fase{position:absolute;left:10px;top:10px;background:rgba(76,29,149,.9);color:#fff;font-weight:700;font-size:12.5px;padding:5px 10px;border-radius:99px;z-index:1}
+.frango-giro{position:absolute;right:10px;top:10px;font-size:11.5px;color:var(--txt2);background:var(--card);padding:4px 9px;border-radius:99px;z-index:1}
+.frango-leg{display:flex;gap:12px;font-size:12px;color:var(--txt2);margin:-2px 2px 8px}.frango-leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .hidden{display:none!important}
 .modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .modal-fundo{position:absolute;inset:0;background:rgba(0,0,0,.5)}
@@ -148,6 +174,7 @@ canvas.grafico{width:100%;height:190px;display:block;margin:8px 0}
 <div id="modal" class="modal hidden"></div>
 <div id="toast" class="toast hidden"></div>
 
+<script src="frango3d.js"></script>
 <script>
 'use strict';
 
@@ -262,10 +289,100 @@ e('polichinelo','Polichinelo','cardio','C','i',['joelho'],'Ritmo constante, ater
 e('corda','Pular corda','cardio','C','i',['joelho'],'Saltos baixos, na ponta dos pés, girando a corda com os punhos.');
 e('burpee','Burpee','cardio','C','c',['joelho','lombar','ombro'],'Agacha, mãos no chão, pés para trás, volta e salta. Intenso!');
 
+// ===== Exercícios extras (v0.2) =====
+// Peito
+e('supino_inc_barra','Supino inclinado com barra','peito','A','c',['ombro'],'Banco a 30–45°. Desça a barra até a parte de cima do peito, cotovelos levemente fechados.');
+e('supino_dec','Supino declinado','peito','A','c',[],'Pés presos no apoio. Desça a barra até a parte de baixo do peito.');
+e('supino_smith','Supino no Smith','peito','A','c',[],'A barra guiada dá mais estabilidade. Posicione o banco para a barra descer no meio do peito.');
+e('crucifixo_inc','Crucifixo inclinado com halteres','peito','H','i',['ombro'],'Banco inclinado, braços semiflexionados. Abra até sentir alongar a parte de cima do peito.');
+e('crossover_baixo','Crossover de baixo para cima','peito','A','i',[],'Polias embaixo; suba as mãos em arco até a altura do peito, focando a parte superior.');
+e('paralelas','Mergulho nas paralelas','peito','C','c',['ombro'],'Tronco inclinado à frente para focar o peito. Desça até o ombro ficar na linha do cotovelo.');
+e('flexao_declinada','Flexão declinada (pés elevados)','peito','C','c',[],'Pés num banco ou cadeira. Foca a parte de cima do peito.');
+e('flexao_aberta','Flexão com mãos afastadas','peito','C','c',['ombro'],'Mãos bem mais abertas que os ombros. Desça controlando.');
+// Costas
+e('puxada_neutra','Puxada com triângulo','costas','A','c',[],'Pegada neutra; puxe até o peito levando os cotovelos para baixo e para trás.');
+e('puxada_supinada','Puxada supinada','costas','A','c',[],'Palmas para você, pegada na largura dos ombros. Ótima para dorsais e bíceps.');
+e('remada_cavalinho','Remada cavalinho (T-bar)','costas','A','c',['lombar'],'Peito apoiado (se tiver) ou tronco firme. Puxe a barra até o abdômen.');
+e('remada_maq','Remada na máquina','costas','A','c',[],'Peito apoiado no encosto; puxe juntando as escápulas.');
+e('remada_alta_polia','Remada aberta na polia','costas','A','c',[],'Pegada aberta, puxe até o peito abrindo os cotovelos. Foca costas altas.');
+e('remada_halteres','Remada curvada com halteres','costas','H','c',['lombar'],'Tronco inclinado, coluna neutra; puxe os dois halteres até o quadril.');
+e('barra_aust','Barra australiana','costas','C','c',[],'Igual à remada invertida, numa barra baixa. Corpo reto o tempo todo.');
+e('serrote_toalha','Remada com toalha na porta','costas','C','c',[],'Toalha presa na maçaneta (porta trancada). Incline o corpo para trás e puxe.');
+// Ombros
+e('desenv_barra','Desenvolvimento com barra (em pé)','ombro','A','c',['ombro','lombar'],'Abdômen e glúteos contraídos. Empurre a barra acima da cabeça sem arquear a lombar.');
+e('arnold','Desenvolvimento Arnold','ombro','H','c',['ombro'],'Comece com as palmas para você e gire os punhos enquanto sobe.');
+e('elev_lat_polia','Elevação lateral na polia','ombro','A','i',[],'Tensão constante. Suba até a linha do ombro, unilateral.');
+e('elev_lat_maq','Elevação lateral na máquina','ombro','A','i',[],'Cotovelos apoiados nas almofadas; suba até a linha dos ombros.');
+e('voador_inv','Voador inverso (peck deck)','ombro','A','i',[],'De frente para a máquina, abra os braços focando a parte de trás do ombro.');
+e('remada_alta','Remada alta','ombro','A','c',['ombro'],'Pegada um pouco aberta; suba a barra até o peito com os cotovelos acima das mãos.');
+e('elev_lat_corpo','Elevação em Y no chão','ombro','C','i',[],'Deitado de bruços, braços em Y; eleve os braços do chão e segure 2 s.');
+// Bíceps
+e('rosca_ez','Rosca com barra W','biceps','A','i',[],'A barra W alivia os punhos. Cotovelos fixos ao lado do corpo.');
+e('rosca_polia','Rosca na polia','biceps','A','i',[],'Tensão constante; suba e aperte no topo.');
+e('rosca_inc','Rosca inclinada com halteres','biceps','H','i',['ombro'],'Banco a 45°, braços pendurados para trás. Alonga bem o bíceps.');
+e('rosca_inversa','Rosca inversa','biceps','A','i',[],'Palmas para baixo. Trabalha bíceps e antebraço.');
+e('rosca_toalha','Rosca isométrica com toalha','biceps','C','i',[],'Pise na toalha e puxe para cima com força, segurando a posição.',true);
+// Tríceps
+e('tri_barra','Tríceps na polia (barra)','triceps','A','i',[],'Cotovelos fixos; estenda até o fim e volte devagar.');
+e('tri_unilateral','Tríceps unilateral na polia','triceps','A','i',[],'Um braço por vez, pegada invertida ou neutra.');
+e('tri_coice_polia','Tríceps coice na polia','triceps','A','i',[],'Tronco inclinado, braço colado ao corpo; estenda para trás.');
+e('supino_fechado','Supino fechado','triceps','A','c',['ombro'],'Pegada na largura dos ombros, cotovelos perto do corpo.');
+e('mergulho_maq','Tríceps na máquina (mergulho)','triceps','A','c',[],'Empurre as alças para baixo mantendo o tronco reto.');
+e('flexao_tri','Flexão com cotovelos fechados','triceps','C','c',[],'Mãos na largura dos ombros e cotovelos raspando no corpo.');
+// Quadríceps
+e('agach_smith','Agachamento no Smith','quadriceps','A','c',['joelho'],'Pés um pouco à frente da barra; desça mantendo o tronco firme.');
+e('agach_frontal','Agachamento frontal','quadriceps','A','c',['joelho','lombar'],'Barra apoiada na frente dos ombros, cotovelos altos e tronco ereto.');
+e('passada_caminhando','Passada caminhando','quadriceps','H','c',['joelho'],'Dê passos largos alternando as pernas, joelho de trás quase no chão.');
+e('step_up','Subida no banco (step-up)','quadriceps','H','c',['joelho'],'Suba num banco firme empurrando com a perna da frente.');
+e('sissy','Agachamento sissy (assistido)','quadriceps','C','i',['joelho'],'Segure em algo, incline o corpo para trás e dobre os joelhos à frente.');
+e('agach_sumo_h','Agachamento sumô com halter','quadriceps','H','c',[],'Pés bem afastados e pontas para fora; halter entre as pernas.');
+e('pistol_assist','Agachamento unilateral assistido','quadriceps','C','c',['joelho'],'Segure num apoio e agache numa perna só, devagar.');
+// Posterior
+e('flexora_em_pe','Flexora em pé','posterior','A','i',[],'Uma perna por vez; dobre o joelho trazendo o calcanhar ao glúteo.');
+e('bom_dia','Bom dia com barra','posterior','A','c',['lombar'],'Barra nas costas, joelhos levemente flexionados; incline o tronco à frente com a coluna neutra.');
+e('stiff_uni_h','Stiff unilateral com halter','posterior','H','c',['lombar'],'Numa perna só, desça o halter rente à perna de apoio.');
+e('nordica','Flexora nórdica (assistida)','posterior','C','i',['joelho'],'Ajoelhado com os pés presos, desça o tronco à frente devagar. Use as mãos para ajudar.');
+e('ponte_pes_elevados','Ponte com pés elevados','posterior','C','i',[],'Calcanhares num banco; suba o quadril sentindo o posterior.');
+// Glúteos
+e('gluteo_polia','Glúteo na polia (coice)','gluteo','A','i',[],'Tornozeleira na polia baixa; leve a perna para trás sem arquear a lombar.');
+e('gluteo_maq','Glúteo na máquina','gluteo','A','i',[],'Empurre a plataforma para trás contraindo o glúteo.');
+e('abducao_elastico','Abdução com elástico','gluteo','C','i',[],'Elástico nos joelhos; abra as pernas em semiagachamento.');
+e('hip_thrust_maq','Elevação pélvica na máquina','gluteo','A','c',[],'Ajuste o cinto no quadril, suba até alinhar o tronco e segure.');
+e('agach_bulgaro_gluteo','Búlgaro com tronco inclinado','gluteo','H','c',['joelho'],'Mesmo búlgaro, mas com o tronco inclinado à frente para focar o glúteo.');
+e('fire_hydrant','Abdução em 4 apoios','gluteo','C','i',[],'Em 4 apoios, abra a perna para o lado com o joelho dobrado.');
+// Panturrilha
+e('pant_leg','Panturrilha no leg press','panturrilha','A','i',[],'Só a ponta dos pés na plataforma; amplitude completa.');
+e('pant_smith','Panturrilha no Smith','panturrilha','A','i',[],'Ponta dos pés num step, barra nas costas.');
+// Abdômen
+e('abd_infra_banco','Abdominal infra no banco','abdomen','C','i',['lombar'],'Sentado na ponta do banco, traga os joelhos ao peito.');
+e('abd_roda','Abdominal com roda','abdomen','C','i',['lombar','ombro'],'De joelhos, role a roda à frente mantendo o abdômen travado.');
+e('elev_joelhos_barra','Elevação de joelhos na barra','abdomen','C','i',[],'Pendurado na barra, suba os joelhos até o peito sem balançar.');
+e('russian_twist','Giro russo','abdomen','C','i',['lombar'],'Sentado com o tronco inclinado, gire de um lado para o outro.');
+e('abd_maq','Abdominal na máquina','abdomen','A','i',[],'Enrole o tronco contraindo o abdômen, sem puxar com os braços.');
+e('hollow','Hollow hold (canoa)','abdomen','C','i',['lombar'],'Lombar colada no chão, braços e pernas estendidos e elevados.',true);
+// Cardio
+e('escada','Escada (simulador)','cardio','A','i',['joelho'],'Ritmo constante, sem se apoiar demais no corrimão.');
+e('remo_ergo','Remo ergométrico','cardio','A','c',['lombar'],'Empurre com as pernas, depois puxe com os braços. Volte na ordem inversa.');
+e('corrida_estacionaria','Corrida estacionária','cardio','C','i',['joelho'],'Corra no lugar elevando os joelhos.');
+e('polichinelo_baixo','Polichinelo sem salto','cardio','C','i',[],'Versão de baixo impacto: um pé de cada vez para o lado.');
+e('bike_ar','Bike / air bike','cardio','A','i',[],'Braços e pernas juntos. Ótima para intervalado.');
+// Trapézio
+e('encolh_barra','Encolhimento com barra','trapezio','A','i',[],'Suba os ombros em direção às orelhas e segure 1 s. Não gire.');
+e('encolh_h','Encolhimento com halteres','trapezio','H','i',[],'Halteres ao lado do corpo; suba e desça os ombros devagar.');
+e('farmer','Caminhada do fazendeiro','trapezio','H','c',[],'Segure halteres pesados e caminhe com postura ereta.');
+// Antebraço
+e('rosca_punho','Rosca de punho','antebraco','H','i',[],'Antebraço apoiado na coxa, palmas para cima; dobre só o punho.');
+e('rosca_punho_inv','Rosca de punho invertida','antebraco','H','i',[],'Palmas para baixo; suba o dorso da mão.');
+e('pendurar','Pendurado na barra','antebraco','C','i',['ombro'],'Segure na barra o máximo de tempo que conseguir.',true);
+// Lombar
+e('hiperextensao','Hiperextensão lombar (banco romano)','lombar','A','i',[],'Desça o tronco e suba até alinhar com as pernas, sem passar disso.');
+e('superman_alt','Superman alternado','lombar','C','i',[],'De bruços, eleve braço e perna opostos, alternando.');
+e('bird_dog','Perdigueiro (bird dog)','lombar','C','i',[],'Em 4 apoios, estenda braço e perna opostos mantendo o quadril parado.');
+
 const EXM = Object.fromEntries(EX.map(x => [x.id, x]));
 
 // ---------- Rótulos ----------
-const GRUPOS = {peito:'Peito',costas:'Costas',ombro:'Ombros',biceps:'Bíceps',triceps:'Tríceps',quadriceps:'Quadríceps',posterior:'Posterior',gluteo:'Glúteos',panturrilha:'Panturrilha',abdomen:'Abdômen',cardio:'Cardio'};
+const GRUPOS = {peito:'Peito',costas:'Costas',ombro:'Ombros',biceps:'Bíceps',triceps:'Tríceps',antebraco:'Antebraço',trapezio:'Trapézio',quadriceps:'Quadríceps',posterior:'Posterior',gluteo:'Glúteos',panturrilha:'Panturrilha',abdomen:'Abdômen',lombar:'Lombar',cardio:'Cardio'};
 const OBJ = {hipertrofia:'Hipertrofia',emagrecimento:'Emagrecimento',forca:'Força',condicionamento:'Condicionamento',saude:'Saúde'};
 const NIVEL = {iniciante:'Iniciante',intermediario:'Intermediário',avancado:'Avançado'};
 const LOCAL = {academia:'Academia',casa:'Casa c/ halteres',corpo:'Peso do corpo'};
@@ -290,7 +407,7 @@ const DICAS = [
 
 // ---------- Estado e armazenamento ----------
 const CHAVE = 'fit_v1';
-function novoEstado() { return { perfil:null, planos:[], ativo:null, sessoes:[], manuais:[], avaliacoes:[], agua:{data:'',copos:0}, tema:'auto', atual:null }; }
+function novoEstado() { return { perfil:null, planos:[], ativo:null, sessoes:[], manuais:[], avaliacoes:[], agua:{data:'',copos:0}, tema:'auto', atual:null, corridas:[], corridaAtual:null }; }
 function carregar() { try { const s = localStorage.getItem(CHAVE); return s ? Object.assign(novoEstado(), JSON.parse(s)) : null; } catch (err) { return null; } }
 let S = carregar() || novoEstado();
 function save() { try { localStorage.setItem(CHAVE, JSON.stringify(S)); } catch (err) {} }
@@ -434,7 +551,7 @@ function sugestao(exId, reps) {
   const inc = EXM[exId].t === 'c' ? 2.5 : 1;
   return `💡 Na última vez você bateu ${f[1]} reps em todas as séries. Hoje tente <b>${fmtN(kg + inc)} kg</b>!`;
 }
-function datasTreino() { const s = new Set(S.sessoes.map(x => x.data)); S.manuais.forEach(d => s.add(d)); return s; }
+function datasTreino() { const s = new Set(S.sessoes.map(x => x.data)); S.manuais.forEach(d => s.add(d)); (S.corridas || []).forEach(c => s.add(c.data)); return s; }
 function inicioSemana(d) { const x = new Date(d); x.setDate(x.getDate() - (x.getDay() + 6) % 7); x.setHours(0,0,0,0); return x; }
 function stats() {
   const ds = [...datasTreino()].map(parseISO), hoje = new Date(), meta = S.perfil?.dias || 3;
@@ -456,8 +573,18 @@ function aplicarTema() {
 }
 function ir(t) { tela = t; sub = {}; render(); window.scrollTo(0, 0); }
 function setSub(k, v) { sub[k] = v; if (k === 'aba') sub.plano = null; render(); window.scrollTo(0, 0); }
-function modal(html) { const m = $('#modal'); m.innerHTML = `<div class="modal-fundo" onclick="fecharModal()"></div><div class="modal-caixa">${html}</div>`; m.classList.remove('hidden'); }
-function fecharModal() { const m = $('#modal'); m.classList.add('hidden'); m.innerHTML = ''; }
+// ---------- Botão voltar do celular ----------
+// Fora da tela inicial (ou com janela aberta) o app guarda uma "entrada" no histórico.
+// Ao apertar voltar: fecha a janela aberta ou volta para o Início. Só fecha o app se já estiver no Início.
+let temEntrada = false;
+function garantirEntrada() { if (!temEntrada) { try { history.pushState({fit:1}, ''); } catch (err) {} temEntrada = true; } }
+window.addEventListener('popstate', () => {
+  temEntrada = false;
+  if (!$('#modal').classList.contains('hidden')) { fecharModal(); if (tela !== 'hoje') garantirEntrada(); return; }
+  if (tela !== 'hoje') { tela = 'hoje'; sub = {}; render(); window.scrollTo(0, 0); }
+});
+function modal(html) { garantirEntrada(); const m = $('#modal'); m.innerHTML = `<div class="modal-fundo" onclick="fecharModal()"></div><div class="modal-caixa">${html}</div>`; m.classList.remove('hidden'); }
+function fecharModal() { try { window.Frango && Frango.parar(); } catch (err) {} const m = $('#modal'); m.classList.add('hidden'); m.innerHTML = ''; }
 function confirmar(msg, fn, txt = 'Confirmar') {
   window._conf = fn;
   modal(`<p style="font-size:16px">${msg}</p><div class="acoes"><button class="btn sec" onclick="fecharModal()">Cancelar</button><button class="btn vermelho" onclick="fecharModal();_conf()">${txt}</button></div>`);
@@ -472,17 +599,20 @@ function nav() {
 
 function render() {
   aplicarTema();
+  if (S.perfil && tela !== 'hoje') garantirEntrada();
   const app = $('#app');
   document.body.classList.toggle('em-treino', tela === 'treino');
   if (!S.perfil) { app.innerHTML = telaBoasVindas(); return; }
   if (tela === 'treino' && !S.atual) tela = 'hoje';
   if (tela === 'treino') { app.innerHTML = telaTreino(); return; }
   if (tela === 'novoplano') { app.innerHTML = telaNovoPlano(); return; }
-  const titulos = {treinos:'Treinos', progresso:'Seu progresso', saude:'Saúde e corpo', perfil:'Perfil'};
+  if (tela === 'correndo' && !S.corridaAtual) tela = 'corrida';
+  if (tela === 'correndo') { app.innerHTML = telaCorrendo(); requestAnimationFrame(desenharRotaAtual); return; }
+  const titulos = {treinos:'Treinos', progresso:'Seu progresso', saude:'Saúde e corpo', perfil:'Perfil', corrida:'Corrida e caminhada'};
   const dataTxt = new Date().toLocaleDateString('pt-BR', {weekday:'long', day:'numeric', month:'long'});
   const topo = tela === 'hoje' ? `<h1>Olá, ${h(S.perfil.nome)} 👋</h1><small>${dataTxt}</small>` : `<h1>${titulos[tela]}</h1>`;
-  const corpo = ({hoje:telaHoje, treinos:telaTreinos, progresso:telaProgresso, saude:telaSaude, perfil:telaPerfil})[tela]();
-  app.innerHTML = `<header class="topo">${topo}</header><main class="conteudo">${S.atual ? `<div class="banner" onclick="ir('treino')">⏱️ Treino em andamento — toque para continuar</div>` : ''}${corpo}</main>${nav()}`;
+  const corpo = ({hoje:telaHoje, treinos:telaTreinos, progresso:telaProgresso, saude:telaSaude, perfil:telaPerfil, corrida:telaCorrida})[tela]();
+  app.innerHTML = `<header class="topo">${topo}</header><main class="conteudo">${S.atual ? `<div class="banner" onclick="ir('treino')">⏱️ Treino em andamento — toque para continuar</div>` : ''}${S.corridaAtual ? `<div class="banner" onclick="ir('correndo')">🏃 Corrida em andamento — toque para voltar</div>` : ''}${corpo}</main>${nav()}`;
   requestAnimationFrame(desenharGraficos);
 }
 
@@ -537,25 +667,64 @@ function concluirBoasVindas(ev) {
 // ---------- Tela: Hoje ----------
 function telaHoje() {
   const p = planoAtivo(), st = stats();
-  let card;
-  if (!p) card = `<div class="card"><p>Você ainda não tem um plano ativo.</p><button class="btn grande" onclick="abrirNovoPlano()">Montar um plano</button></div>`;
+  if (S.agua.data !== hojeISO()) S.agua = {data:hojeISO(), copos:0};
+  // próximo treino: compacto, uma linha
+  let treino;
+  if (!p) treino = `<div class="card linha"><span>Você ainda não tem um plano.</span><button class="btn peq" onclick="abrirNovoPlano()">Montar plano</button></div>`;
   else {
-    const di = p.proximo % p.dias.length, d = p.dias[di];
-    const feito = S.sessoes.some(s => s.data === hojeISO());
-    card = `<div class="card destaque">
-      <div class="rotulo">${feito ? '✅ Já treinou hoje! Próximo treino' : 'Treino de hoje'}</div>
-      <h2>${h(d.nome)} — ${h(d.foco)}</h2>
-      <div class="sub">${h(p.nome)} · ${d.exercicios.length} exercícios · ~${duracaoEst(d)} min</div>
-      <ul class="mini">${d.exercicios.map(x => `<li>${h(EXM[x.exId]?.nome)}<span>${x.series}×${h(x.reps)}</span></li>`).join('')}</ul>
-      <button class="btn grande" onclick="iniciarTreino('${p.id}',${di})">▶ Começar treino</button>
-      <button class="btn-link centro" onclick="escolherOutroDia()">Fazer outro treino do plano</button></div>`;
+    const di = p.proximo % p.dias.length, d = p.dias[di], feito = S.sessoes.some(s => s.data === hojeISO());
+    treino = `<div class="card proximo"><div class="info-prox" onclick="escolherOutroDia()"><div class="rotulo">${feito ? '✅ Treinou hoje · próximo' : 'Próximo treino'}</div>
+      <b>${h(d.nome)} · ${h(d.foco)}</b><div class="sub">${d.exercicios.length} exercícios · ~${duracaoEst(d)} min</div></div>
+      <button class="play" onclick="iniciarTreino('${p.id}',${di})" title="Começar">▶</button></div>`;
   }
-  const dia = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
-  const [ic, dica] = DICAS[dia % DICAS.length];
-  return `${card}
-  <div class="grid3">${statCard('Esta semana', `${st.semana}/${st.meta}`)}${statCard('Este mês', st.mes)}${statCard('Semanas na meta', st.seq + (st.seq ? ' 🔥' : ''))}</div>
-  ${cardAgua()}
-  <div class="card dica"><span>${ic}</span><div><div class="rotulo">Dica do dia</div>${dica}</div></div>`;
+  const m = metaAgua(), c = S.agua.copos, n = numerosCorpo(), st2 = stats();
+  const kmSem = kmSemana();
+  const tile = (ic, val, rot, alvo, extra = '') => `<div class="tile" ${alvo ? `onclick="ir('${alvo}')"` : ''}><span>${ic}</span><b>${val}</b><small>${rot}</small>${extra}</div>`;
+  const varTxt = (v, un, inverso) => v === null ? '' : `<em class="${(inverso ? -v : v) < 0 ? 'bom' : v === 0 ? '' : 'ruim'}">${v > 0 ? '+' : ''}${fmtN(v)} ${un} no mês</em>`;
+  return `${treino}
+  <div class="tiles">
+    ${tile('📅', `${st2.semana}/${st2.meta}`, 'treinos na semana', 'progresso')}
+    ${tile('🔥', st2.seq, st2.seq === 1 ? 'semana na meta' : 'semanas na meta', 'progresso')}
+  </div>
+  <div class="sec-titulo">Seu corpo</div>
+  <div class="tiles">
+    ${tile('⚖️', n.peso ? fmtN(n.peso) + ' kg' : '—', 'peso atual', 'saude', varTxt(n.varPeso, 'kg', S.perfil.objetivo === 'hipertrofia'))}
+    ${tile('📏', n.imc ? fmtN(n.imc) : '—', n.imc ? 'IMC · ' + n.faixa : 'IMC (preencha altura)', 'saude')}
+    <div class="tile agua"><span>💧</span><b>${fmtN(c*0.25,2)} / ${fmtN(m*0.25,1)} L</b><small>água hoje</small>
+      <div class="barra"><div style="width:${Math.min(100, c/m*100)}%"></div></div>
+      <div class="agua-btns"><button onclick="agua(-1)">−</button><button onclick="agua(1)">+ copo</button></div></div>
+    ${tile('🍽️', n.kcal ? '~' + fmtN(n.kcal, 0) : '—', n.kcal ? 'kcal/dia p/ ' + OBJ[S.perfil.objetivo].toLowerCase() : 'kcal (preencha idade)', 'saude')}
+    ${tile('🍗', n.prot ? n.prot : '—', 'proteína por dia (g)', 'saude')}
+    ${n.cintura || n.gordura ? tile('📐', [n.cintura && fmtN(n.cintura) + ' cm', n.gordura && fmtN(n.gordura) + '%'].filter(Boolean).join(' · '), [n.cintura && 'cintura', n.gordura && 'gordura'].filter(Boolean).join(' · '), 'saude', varTxt(n.varCintura, 'cm', true)) : tile('📐', '—', 'cintura e % gordura', 'saude')}
+    ${tile('🏃', fmtN(kmSem, 1) + ' km', 'corridas na semana', 'corrida')}
+  </div>`;
+}
+// números do corpo (usados na tela inicial e na Saúde)
+function numerosCorpo() {
+  const p = S.perfil, o = {peso:p.peso, imc:null, faixa:'', kcal:null, prot:null, cintura:null, gordura:null, varPeso:null, varCintura:null};
+  if (p.peso && p.altura) { o.imc = p.peso / Math.pow(p.altura/100, 2); o.faixa = o.imc < 18.5 ? 'abaixo do peso' : o.imc < 25 ? 'peso normal' : o.imc < 30 ? 'sobrepeso' : 'obesidade'; }
+  if (p.peso && p.altura && p.idade) {
+    const tmb = 10*p.peso + 6.25*p.altura - 5*p.idade + (p.sexo === 'f' ? -161 : 5);
+    const gasto = tmb * (p.dias <= 2 ? 1.375 : p.dias <= 4 ? 1.55 : 1.725);
+    o.kcal = Math.round((gasto + (({emagrecimento:-400, hipertrofia:300, forca:200})[p.objetivo] || 0)) / 50) * 50;
+  }
+  if (p.peso) { const f = ({hipertrofia:[1.6,2.2], forca:[1.6,2.2], emagrecimento:[1.6,2.2], condicionamento:[1.4,1.8]})[p.objetivo] || [1.2,1.6]; o.prot = Math.round(p.peso*f[0]) + '–' + Math.round(p.peso*f[1]); }
+  const av = S.avaliacoes.slice().sort((x, y) => x.data.localeCompare(y.data));
+  const ult = k => { for (let i = av.length - 1; i >= 0; i--) if (av[i][k]) return av[i]; return null; };
+  const haMes = k => { const lim = new Date(); lim.setDate(lim.getDate() - 30); const l = iso(lim); let r = null; for (const a of av) if (a[k] && a.data <= l) r = a; return r || av.find(a => a[k]) || null; };
+  const uc = ult('cintura'), ug = ult('gordura'); o.cintura = uc ? uc.cintura : null; o.gordura = ug ? ug.gordura : null;
+  const up = ult('peso'), ap = haMes('peso'); if (up && ap && ap !== up) o.varPeso = Math.round((up.peso - ap.peso) * 10) / 10;
+  const ac = haMes('cintura'); if (uc && ac && ac !== uc) o.varCintura = Math.round((uc.cintura - ac.cintura) * 10) / 10;
+  return o;
+}
+function contarRecordes() {
+  const max = {}; let n = 0;
+  for (const s of S.sessoes) for (const x of s.exercicios) {
+    const k = Math.max(0, ...x.series.map(y => num(y.kg) || 0)); if (k <= 0) continue;
+    if (max[x.exId] !== undefined && k > max[x.exId]) n++;
+    max[x.exId] = Math.max(max[x.exId] || 0, k);
+  }
+  return n;
 }
 function escolherOutroDia() {
   const p = planoAtivo(); if (!p) return;
@@ -582,7 +751,7 @@ function telaTreinos() {
   if (aba === 'exercicios') return html + telaBiblioteca();
   const aberto = sub.plano && S.planos.find(x => x.id === sub.plano);
   if (aberto) return html + telaPlano(aberto);
-  html += `<button class="btn grande" onclick="abrirNovoPlano()">＋ Montar novo plano</button>`;
+  html += `<button class="btn grande" onclick="abrirNovoPlano()">＋ Montar novo plano</button><button class="btn sec grande" style="margin-top:0" onclick="ir('corrida')">🏃 Corrida e caminhada</button>`;
   html += S.planos.length ? S.planos.map(p => `<div class="card plano ${p.id===S.ativo?'ativo':''}" onclick="setSub('plano','${p.id}')">
     <div class="linha"><h3>${h(p.nome)}</h3>${p.id===S.ativo?'<span class="tag">ATIVO</span>':''}</div>
     <div class="sub">${OBJ[p.cfg.objetivo]} · ${NIVEL[p.cfg.nivel]} · ${p.cfg.dias}x/semana · ${h(p.divisao)}</div></div>`).join('')
@@ -606,11 +775,13 @@ function telaBiblioteca() {
   ${EX.filter(x => x.g === g).map(x => `<div class="card ex-bib" onclick="verExercicio('${x.id}')"><b>${h(x.nome)}</b><small>${EQ_NOME[x.eq]} · ${x.t === 'c' ? 'Composto' : 'Isolado'}${x.iso ? ' · por tempo' : ''}</small></div>`).join('')}`;
 }
 function verExercicio(id) {
-  const x = EXM[id], r = recorde(id);
-  modal(`<div class="rotulo">${GRUPOS[x.g]} · ${EQ_NOME[x.eq]}</div><h2>${h(x.nome)}</h2><p>${h(x.dica)}</p>
+  const x = EXM[id], r = recorde(id), tem3d = window.Frango && Frango.tem(id);
+  modal(`${tem3d ? `<div class="frango-palco" id="frangoPalco"></div><div class="frango-leg"><span><i style="background:#7c3aed"></i>Principal</span><span><i style="background:#c4b5fd"></i>Auxiliar</span></div>` : ''}
+  <div class="rotulo">${GRUPOS[x.g]} · ${EQ_NOME[x.eq]}</div><h2>${h(x.nome)}</h2><p>${h(x.dica)}</p>
   ${x.ev.length ? `<p class="aviso">⚠️ Cuidado se tiver dor ou lesão no(a): ${x.ev.map(l => LIMIT[l].toLowerCase()).join(', ')}.</p>` : ''}
   ${r ? `<p>🏆 Seu recorde: <b>${fmtN(r)} kg</b></p>` : ''}
   <button class="btn sec grande" onclick="fecharModal()">Fechar</button>`);
+  if (tem3d) { try { Frango.configurar(S.perfil, S.sessoes.length); Frango.montar($('#frangoPalco'), id, x.g); } catch (err) { const p = $('#frangoPalco'); if (p) p.remove(); } }
 }
 const acharPlano = id => S.planos.find(x => x.id === id);
 function ativarPlano(id) { S.ativo = id; save(); render(); toast('Plano ativado ✅'); }
@@ -795,6 +966,214 @@ function tickDescanso() {
 function ajustarDescanso(d) { T.fim += d * 1000; if (d > 0) T.total += d; tickDescanso(); }
 function pararDescanso() { clearInterval(T.iv); T.iv = null; $('#timer').classList.add('hidden'); }
 
+// ---------- Corrida e caminhada (GPS) ----------
+const RUN = {watch:null, motion:null, wake:null, iv:null, ultAcc:0, ultPasso:0, filtro:9.8, temMotion:false, sinal:'buscando'};
+function distM(a, b) { const R = 6371000, r = Math.PI / 180, dLa = (b[0]-a[0])*r, dLo = (b[1]-a[1])*r;
+  const x = Math.sin(dLa/2)**2 + Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+const fmtRitmo = sKm => !sKm || !isFinite(sKm) || sKm > 3600 ? '--:--' : fmtTempo(Math.round(sKm));
+const fmtDur = s => { s = Math.round(s); const hh = Math.floor(s/3600); return hh ? hh + ':' + String(Math.floor(s%3600/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0') : fmtTempo(s); };
+function passada(tipo) { const alt = (S.perfil.altura || 170) / 100; return tipo === 'corrida' ? alt * .65 : alt * .415; }
+function kcalCorrida(tipo, m) { return Math.round((S.perfil.peso || 70) * (m/1000) * (tipo === 'corrida' ? 1.0 : .55)); }
+function tempoCorrida(c) { return c.acumulado + (c.rodando ? (Date.now() - c.trecho) / 1000 : 0); }
+function kmSemana() { const ini = inicioSemana(new Date()); return (S.corridas || []).filter(c => parseISO(c.data) >= ini).reduce((t, c) => t + c.dist, 0) / 1000; }
+
+function iniciarCorrida(tipo) {
+  if (!('geolocation' in navigator)) { toast('Este aparelho não tem GPS disponível'); return; }
+  if (S.atual) { toast('Finalize o treino em andamento antes'); return; }
+  S.corridaAtual = {tipo, inicio:Date.now(), data:hojeISO(), acumulado:0, trecho:Date.now(), rodando:true, dist:0, passos:0, pontos:[], ult:null, recentes:[]};
+  save(); ligarSensores(); tela = 'correndo'; render(); window.scrollTo(0, 0);
+}
+function ligarSensores() {
+  const c = S.corridaAtual; if (!c) return;
+  RUN.sinal = 'buscando';
+  try { navigator.geolocation.clearWatch(RUN.watch); } catch (err) {}
+  RUN.watch = navigator.geolocation.watchPosition(posicao, erroGPS, {enableHighAccuracy:true, maximumAge:0, timeout:20000});
+  // passos pelo sensor de movimento
+  const ligarMov = () => { if (RUN.motion) return; RUN.motion = ev => {
+      const a = ev.accelerationIncludingGravity; if (!a || a.x === null) return; RUN.temMotion = true;
+      const mag = Math.sqrt(a.x*a.x + a.y*a.y + a.z*a.z); RUN.filtro = RUN.filtro * .8 + mag * .2;
+      const agora = Date.now(), c2 = S.corridaAtual;
+      if (c2 && c2.rodando && RUN.filtro > 11.2 && RUN.ultAcc <= 11.2 && agora - RUN.ultPasso > 250) { c2.passos++; RUN.ultPasso = agora; }
+      RUN.ultAcc = RUN.filtro; };
+    window.addEventListener('devicemotion', RUN.motion); };
+  try { if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) DeviceMotionEvent.requestPermission().then(r => { if (r === 'granted') ligarMov(); }).catch(() => {}); else ligarMov(); } catch (err) {}
+  manterTelaLigada();
+  clearInterval(RUN.iv); RUN.iv = setInterval(() => { if (tela === 'correndo') atualizarPainel(); if (S.corridaAtual) save(); }, 1000);
+}
+async function manterTelaLigada() { try { if ('wakeLock' in navigator && S.corridaAtual) RUN.wake = await navigator.wakeLock.request('screen'); } catch (err) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.corridaAtual) manterTelaLigada(); });
+function desligarSensores() {
+  try { navigator.geolocation.clearWatch(RUN.watch); } catch (err) {} RUN.watch = null;
+  if (RUN.motion) window.removeEventListener('devicemotion', RUN.motion); RUN.motion = null;
+  try { RUN.wake && RUN.wake.release(); } catch (err) {} RUN.wake = null;
+  clearInterval(RUN.iv);
+}
+function posicao(p) {
+  const c = S.corridaAtual; if (!c) return;
+  const acc = p.coords.accuracy, pt = [p.coords.latitude, p.coords.longitude, Date.now()];
+  RUN.sinal = acc <= 15 ? 'bom' : acc <= 35 ? 'médio' : 'fraco';
+  if (acc > 35 || !c.rodando) { if (tela === 'correndo') atualizarPainel(); return; }
+  if (c.ult) {
+    const d = distM(c.ult, pt), dt = (pt[2] - c.ult[2]) / 1000;
+    if (d < 3) return;                       // ruído parado
+    if (dt > 0 && d / dt > 12) { c.ult = pt; return; } // salto impossível (> 43 km/h)
+    c.dist += d;
+    c.recentes.push([pt[2], c.dist]); c.recentes = c.recentes.filter(r => pt[2] - r[0] < 30000);
+  }
+  c.ult = pt;
+  const ul = c.pontos[c.pontos.length - 1];
+  if (!ul || distM(ul, pt) > 8) c.pontos.push([+pt[0].toFixed(6), +pt[1].toFixed(6)]);
+  if (tela === 'correndo') { atualizarPainel(); desenharRotaAtual(); }
+}
+function erroGPS(e) {
+  RUN.sinal = 'erro';
+  if (e.code === 1) toast('Permita o acesso à localização para contar os km');
+  if (tela === 'correndo') atualizarPainel();
+}
+function ritmoAtual(c) { const r = c.recentes; if (r.length < 2) return null; const dt = (r[r.length-1][0] - r[0][0]) / 1000, dd = r[r.length-1][1] - r[0][1]; return dd > 15 ? dt / (dd/1000) : null; }
+function passosCorrida(c) { return RUN.temMotion && c.passos > 0 ? {n:c.passos, est:false} : {n:Math.round(c.dist / passada(c.tipo)), est:true}; }
+function telaCorrendo() {
+  const c = S.corridaAtual, t = tempoCorrida(c), ps = passosCorrida(c);
+  return `<header class="topo fixo"><button class="voltar" onclick="ir('hoje')">←</button><div style="flex:1"><h1>${c.tipo === 'corrida' ? '🏃 Corrida' : '🚶 Caminhada'}</h1><small id="gps">${textoSinal()}</small></div></header>
+  <main class="conteudo">
+  <div class="card corrida-painel">
+    <div class="km"><b id="rKm">${fmtN(c.dist/1000, 2)}</b><span>km</span></div>
+    <div class="grid3 run3">
+      <div><b id="rTempo">${fmtDur(t)}</b><small>tempo</small></div>
+      <div><b id="rRitmo">${fmtRitmo(ritmoAtual(c))}</b><small>ritmo atual /km</small></div>
+      <div><b id="rMedio">${fmtRitmo(c.dist > 50 ? t / (c.dist/1000) : null)}</b><small>ritmo médio /km</small></div>
+      <div><b id="rPassos">${ps.n.toLocaleString('pt-BR')}</b><small id="rPassosR">${ps.est ? 'passadas (estim.)' : 'passadas'}</small></div>
+      <div><b id="rKcal">${kcalCorrida(c.tipo, c.dist)}</b><small>kcal</small></div>
+      <div><b id="rVel">${c.dist > 50 && t > 0 ? fmtN(c.dist/1000/(t/3600), 1) : '0'}</b><small>km/h médio</small></div>
+    </div>
+  </div>
+  <div class="card"><div class="rotulo">Trajeto</div><canvas class="rota" id="rotaAtual"></canvas></div>
+  <div class="linha" style="flex-wrap:nowrap"><button class="btn sec grande" style="margin:0" onclick="pausarCorrida()">${c.rodando ? '⏸ Pausar' : '▶ Continuar'}</button>
+  <button class="btn grande" style="margin:0" onclick="finalizarCorrida()">🏁 Finalizar</button></div>
+  <p class="aviso">Mantenha o app aberto durante a corrida: a tela fica ligada sozinha. Se a tela apagar ou você sair do app, o celular pausa o GPS.</p>
+  <button class="btn-link perigo centro" onclick="descartarCorrida()">Descartar</button></main>`;
+}
+function textoSinal() { return ({buscando:'📡 Procurando GPS…', bom:'📡 GPS bom', 'médio':'📡 GPS médio', fraco:'📡 GPS fraco — vá para um lugar aberto', erro:'⚠️ GPS indisponível'})[RUN.sinal] + (S.corridaAtual && !S.corridaAtual.rodando ? ' · pausado' : ''); }
+function atualizarPainel() {
+  const c = S.corridaAtual; if (!c || !$('#rKm')) return;
+  const t = tempoCorrida(c), ps = passosCorrida(c), set = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  set('#rKm', fmtN(c.dist/1000, 2)); set('#rTempo', fmtDur(t)); set('#rRitmo', fmtRitmo(ritmoAtual(c)));
+  set('#rMedio', fmtRitmo(c.dist > 50 ? t / (c.dist/1000) : null)); set('#rPassos', ps.n.toLocaleString('pt-BR')); set('#rPassosR', ps.est ? 'passadas (estim.)' : 'passadas');
+  set('#rKcal', kcalCorrida(c.tipo, c.dist)); set('#rVel', c.dist > 50 && t > 0 ? fmtN(c.dist/1000/(t/3600), 1) : '0'); set('#gps', textoSinal());
+}
+function pausarCorrida() {
+  const c = S.corridaAtual;
+  if (c.rodando) { c.acumulado = tempoCorrida(c); c.rodando = false; }
+  else { c.rodando = true; c.trecho = Date.now(); c.ult = null; c.recentes = []; if (!RUN.watch) ligarSensores(); }
+  save(); render();
+}
+function descartarCorrida() { confirmar('Descartar esta corrida? Nada será salvo.', () => { desligarSensores(); S.corridaAtual = null; save(); ir('corrida'); }, 'Descartar'); }
+function finalizarCorrida() {
+  const c = S.corridaAtual, t = tempoCorrida(c);
+  if (c.dist < 50) { confirmar('A distância ficou muito pequena (menos de 50 m). Descartar?', () => { desligarSensores(); S.corridaAtual = null; save(); ir('corrida'); }, 'Descartar'); return; }
+  const ps = passosCorrida(c);
+  const r = {id:uid(), tipo:c.tipo, data:c.data, inicio:c.inicio, duracao:Math.round(t), dist:Math.round(c.dist), passos:ps.n, passosEst:ps.est, kcal:kcalCorrida(c.tipo, c.dist), pontos:c.pontos};
+  const recAnt = recordesCorrida(r.tipo);
+  S.corridas.push(r); desligarSensores(); S.corridaAtual = null; save();
+  const novos = [];
+  if (!recAnt.maior || r.dist > recAnt.maior.dist) novos.push('maior distância');
+  if (r.dist >= 1000 && (!recAnt.ritmo || ritmoDe(r) < ritmoDe(recAnt.ritmo))) novos.push('melhor ritmo');
+  ir('corrida');
+  modal(`<div style="text-align:center"><div class="grande-emoji">${r.tipo === 'corrida' ? '🏃' : '🚶'}</div><h2>${r.tipo === 'corrida' ? 'Corrida' : 'Caminhada'} concluída!</h2>
+  <p><b>${fmtN(r.dist/1000, 2)} km</b> · ${fmtDur(r.duracao)} · ${fmtRitmo(ritmoDe(r))} /km</p><p class="sub">${r.passos.toLocaleString('pt-BR')} passadas · ${r.kcal} kcal</p>
+  ${novos.length && S.corridas.filter(x => x.tipo === r.tipo).length > 1 ? `<div class="recordes"><b>🏆 Novo recorde:</b> ${novos.join(' e ')}!</div>` : ''}
+  <button class="btn grande" onclick="fecharModal()">Fechar</button></div>`);
+}
+const ritmoDe = r => r.dist > 0 ? r.duracao / (r.dist/1000) : Infinity;
+function recordesCorrida(tipo) {
+  const l = (S.corridas || []).filter(r => !tipo || r.tipo === tipo), o = {maior:null, ritmo:null, cinco:null, passos:null};
+  for (const r of l) {
+    if (!o.maior || r.dist > o.maior.dist) o.maior = r;
+    if (r.dist >= 1000 && (!o.ritmo || ritmoDe(r) < ritmoDe(o.ritmo))) o.ritmo = r;
+    if (r.dist >= 5000 && (!o.cinco || ritmoDe(r) < ritmoDe(o.cinco))) o.cinco = r;
+    if (!o.passos || r.passos > o.passos.passos) o.passos = r;
+  }
+  return o;
+}
+function desenharRotaAtual() { const c = $('#rotaAtual'); if (c && S.corridaAtual) desenharRota(c, S.corridaAtual.pontos); }
+function desenharRota(cv, pts) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, hh = cv.clientHeight; if (!w) return;
+  cv.width = w*dpr; cv.height = hh*dpr; const x = cv.getContext('2d'); x.scale(dpr, dpr);
+  const cs = getComputedStyle(document.documentElement), cor = cs.getPropertyValue('--pri').trim(), txt = cs.getPropertyValue('--txt2').trim();
+  if (!pts || pts.length < 2) { x.fillStyle = txt; x.font = '13px system-ui'; x.textAlign = 'center'; x.fillText(pts && pts.length ? 'Comece a se mover…' : 'Aguardando o GPS…', w/2, hh/2); return; }
+  const la0 = pts[0][0], k = Math.cos(la0 * Math.PI / 180);
+  const xy = pts.map(p => [p[1]*k, -p[0]]);
+  let mnx = Math.min(...xy.map(p => p[0])), mxx = Math.max(...xy.map(p => p[0])), mny = Math.min(...xy.map(p => p[1])), mxy = Math.max(...xy.map(p => p[1]));
+  const esc = Math.min((w-24)/Math.max(mxx-mnx, 1e-6), (hh-24)/Math.max(mxy-mny, 1e-6));
+  const ox = (w - (mxx-mnx)*esc)/2, oy = (hh - (mxy-mny)*esc)/2, P = p => [ox + (p[0]-mnx)*esc, oy + (p[1]-mny)*esc];
+  x.lineWidth = 4; x.lineJoin = 'round'; x.lineCap = 'round'; x.strokeStyle = cor; x.beginPath();
+  xy.forEach((p, i) => { const q = P(p); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); }); x.stroke();
+  const a = P(xy[0]), b = P(xy[xy.length-1]);
+  x.fillStyle = '#16a34a'; x.beginPath(); x.arc(a[0], a[1], 6, 0, 7); x.fill();
+  x.fillStyle = '#dc2626'; x.beginPath(); x.arc(b[0], b[1], 6, 0, 7); x.fill();
+}
+function telaCorrida() {
+  const filtro = sub.tipoC || 'todas', lista = (S.corridas || []).filter(r => filtro === 'todas' || r.tipo === filtro);
+  const hoje = new Date(), ini = inicioSemana(hoje);
+  const soma = l => l.reduce((t, r) => t + r.dist, 0) / 1000;
+  const doMes = (y, m) => lista.filter(r => { const d = parseISO(r.data); return d.getFullYear() === y && d.getMonth() === m; });
+  const mesA = doMes(hoje.getFullYear(), hoje.getMonth()), ant = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1), mesB = doMes(ant.getFullYear(), ant.getMonth());
+  let html = `<div class="linha" style="flex-wrap:nowrap"><button class="btn grande" style="margin:0" onclick="iniciarCorrida('corrida')">🏃 Correr</button><button class="btn grande" style="margin:0" onclick="iniciarCorrida('caminhada')">🚶 Caminhar</button></div>
+  <div class="chips" style="margin:0">${[['todas','Todas'],['corrida','Corridas'],['caminhada','Caminhadas']].map(([k, l]) => `<button class="chip-btn ${filtro === k ? 'on' : ''}" onclick="sub.tipoC='${k}';render()">${l}</button>`).join('')}</div>
+  <div class="grid3">${statCard('Semana', fmtN(soma(lista.filter(r => parseISO(r.data) >= ini)), 1) + ' km')}${statCard('Mês', fmtN(soma(mesA), 1) + ' km')}${statCard('Total', fmtN(soma(lista), 1) + ' km')}</div>`;
+  if (!lista.length) return html + `<div class="card"><p class="vazio">Nenhuma ${filtro === 'caminhada' ? 'caminhada' : 'corrida'} ainda. Toque em Correr ou Caminhar para começar!</p><p class="aviso">Dica: use em lugar aberto para o GPS ficar preciso, e mantenha o app aberto durante a atividade.</p></div>`;
+  // km por semana (8 semanas)
+  const sem = [];
+  for (let i = 7; i >= 0; i--) { const a = new Date(ini); a.setDate(a.getDate() - i*7); const b = new Date(a); b.setDate(b.getDate() + 7);
+    sem.push({l: String(a.getDate()).padStart(2,'0') + '/' + String(a.getMonth()+1).padStart(2,'0'), v: soma(lista.filter(r => { const d = parseISO(r.data); return d >= a && d < b; }))}); }
+  graficos.kmSem = {barras:sem, un:'km'};
+  const comRitmo = lista.filter(r => r.dist >= 500).slice(-15);
+  graficos.ritmo = comRitmo.map(r => ({l: fmtData(r.data).slice(0, 5), v: Math.round(ritmoDe(r)) / 60}));
+  html += `<div class="card"><h3>📊 Km por semana</h3><canvas class="grafico" data-g="kmSem"></canvas></div>`;
+  if (comRitmo.length >= 2) html += `<div class="card"><h3>⚡ Ritmo médio (min/km)</h3><p class="sub">Quanto mais baixo, mais rápido você está.</p><canvas class="grafico" data-g="ritmo"></canvas></div>`;
+  // este mês x mês passado
+  const lin = (rot, a, b, fmt, menorMelhor) => { const s2 = a === null || b === null ? '' : (menorMelhor ? a < b : a > b) ? '<span class="bom">▲</span>' : a === b ? '' : '<span class="ruim">▼</span>';
+    return `<div class="cmp-l"><span>${rot}</span><b>${a === null ? '—' : fmt(a)} ${s2}</b><b class="sub">${b === null ? '—' : fmt(b)}</b></div>`; };
+  const rm = l => { const d = soma(l); return d > 0 ? l.reduce((t, r) => t + r.duracao, 0) / d : null; };
+  html += `<div class="card"><h3>📅 Este mês × mês passado</h3><div class="cmp-l cab"><span></span><b>Este mês</b><b class="sub">Mês passado</b></div>
+  ${lin('Distância', soma(mesA), soma(mesB), v => fmtN(v, 1) + ' km')}${lin('Atividades', mesA.length, mesB.length, v => v)}
+  ${lin('Ritmo médio', rm(mesA), rm(mesB), v => fmtRitmo(v), true)}${lin('Tempo total', mesA.reduce((t, r) => t + r.duracao, 0), mesB.reduce((t, r) => t + r.duracao, 0), v => fmtDur(v))}</div>`;
+  // recordes
+  const rc = recordesCorrida(filtro === 'todas' ? null : filtro);
+  html += `<div class="card"><h3>🏆 Recordes</h3><div class="dados">
+  <div class="linha"><span>Maior distância</span><b>${rc.maior ? fmtN(rc.maior.dist/1000, 2) + ' km' : '—'}</b></div>
+  <div class="linha"><span>Melhor ritmo (1 km+)</span><b>${rc.ritmo ? fmtRitmo(ritmoDe(rc.ritmo)) + ' /km' : '—'}</b></div>
+  <div class="linha"><span>5 km mais rápido</span><b>${rc.cinco ? fmtDur(ritmoDe(rc.cinco) * 5) : '—'}</b></div>
+  <div class="linha"><span>Mais passadas</span><b>${rc.passos ? rc.passos.passos.toLocaleString('pt-BR') : '—'}</b></div></div></div>`;
+  // comparar duas
+  if (lista.length >= 2) {
+    const ord = lista.slice().reverse(), A = ord.find(r => r.id === sub.cA) || ord[1], B = ord.find(r => r.id === sub.cB) || ord[0];
+    const op = sel => ord.map(r => `<option value="${r.id}" ${r.id === sel.id ? 'selected' : ''}>${fmtData(r.data)} · ${fmtN(r.dist/1000, 1)} km</option>`).join('');
+    const ln = (rot, a, b, fmt, menor) => `<div class="cmp-l"><span>${rot}</span><b class="${(menor ? a < b : a > b) ? 'bom' : ''}">${fmt(a)}</b><b class="${(menor ? b < a : b > a) ? 'bom' : ''}">${fmt(b)}</b></div>`;
+    html += `<div class="card"><h3>⚖️ Comparar duas</h3><div class="form-grid"><select onchange="sub.cA=this.value;render()">${op(A)}</select><select onchange="sub.cB=this.value;render()">${op(B)}</select></div>
+    ${ln('Distância', A.dist, B.dist, v => fmtN(v/1000, 2) + ' km')}${ln('Tempo', A.duracao, B.duracao, fmtDur, true)}${ln('Ritmo', ritmoDe(A), ritmoDe(B), v => fmtRitmo(v) + '/km', true)}
+    ${ln('Passadas', A.passos, B.passos, v => v.toLocaleString('pt-BR'))}${ln('Calorias', A.kcal, B.kcal, v => v + ' kcal')}</div>`;
+  }
+  // histórico
+  html += `<div class="card"><h3>🗓️ Histórico</h3>${lista.slice().reverse().slice(0, sub.cMais ? 999 : 10).map(r => `<div class="hist"><div class="linha" onclick="sub.cAb=sub.cAb==='${r.id}'?null:'${r.id}';render()"><div><b>${r.tipo === 'corrida' ? '🏃' : '🚶'} ${fmtN(r.dist/1000, 2)} km · ${fmtDur(r.duracao)}</b><div class="sub">${fmtData(r.data)} · ${fmtRitmo(ritmoDe(r))} /km · ${r.kcal} kcal</div></div><span class="sub">${sub.cAb === r.id ? '▲' : '▼'}</span></div>
+  ${sub.cAb === r.id ? `<div class="hist-det"><canvas class="rota" data-rota="${r.id}"></canvas><div>${r.passos.toLocaleString('pt-BR')} passadas${r.passosEst ? ' (estimadas)' : ''} · ${r.dist/1000 > 0 ? fmtN(r.dist/1000/(r.duracao/3600), 1) : 0} km/h médio</div><button class="btn-link perigo" style="text-align:left" onclick="excluirCorrida('${r.id}')">Excluir</button></div>` : ''}</div>`).join('')}
+  ${lista.length > 10 && !sub.cMais ? `<button class="btn-link" onclick="sub.cMais=1;render()">Ver todas (${lista.length})</button>` : ''}</div>`;
+  return html;
+}
+function excluirCorrida(id) { confirmar('Excluir esta atividade?', () => { S.corridas = S.corridas.filter(r => r.id !== id); save(); render(); }, 'Excluir'); }
+function desenharBarras(c, pts, un) {
+  const dpr = window.devicePixelRatio || 1, w = c.clientWidth, hh = c.clientHeight; if (!w || !pts.length) return;
+  c.width = w*dpr; c.height = hh*dpr; const x = c.getContext('2d'); x.scale(dpr, dpr);
+  const cs = getComputedStyle(document.documentElement), cor = cs.getPropertyValue('--pri').trim(), txt = cs.getPropertyValue('--txt2').trim(), lin = cs.getPropertyValue('--borda').trim();
+  const mx = Math.max(1, ...pts.map(p => p.v)), pad = {l:8, r:8, t:20, b:22}, W = w - pad.l - pad.r, H = hh - pad.t - pad.b, bw = W / pts.length;
+  x.strokeStyle = lin; x.beginPath(); x.moveTo(pad.l, pad.t + H); x.lineTo(w - pad.r, pad.t + H); x.stroke();
+  x.font = '11px system-ui'; x.textAlign = 'center';
+  pts.forEach((p, i) => { const bh = p.v / mx * H, bx = pad.l + i*bw + bw*.18, by = pad.t + H - bh;
+    x.fillStyle = i === pts.length - 1 ? cor : cor + '99'; x.beginPath(); x.roundRect ? x.roundRect(bx, by, bw*.64, Math.max(bh, 1), 5) : x.rect(bx, by, bw*.64, Math.max(bh, 1)); x.fill();
+    x.fillStyle = txt; if (p.v > 0) x.fillText(fmtN(p.v, 1), bx + bw*.32, by - 5); x.fillText(p.l, bx + bw*.32, hh - 6); });
+}
+if (S.corridaAtual) setTimeout(ligarSensores, 300);
+
 // ---------- Tela: Progresso ----------
 function telaProgresso() {
   const st = stats();
@@ -927,7 +1306,7 @@ function telaPerfil() {
   <div class="acoes" style="justify-content:flex-start"><button class="btn" onclick="exportar()">Exportar dados</button><label class="btn sec">Importar<input type="file" accept=".json,application/json" hidden onchange="importar(this)"></label></div></div>
   <div class="card"><h3>⚠️ Aviso importante</h3><p class="sub">${AVISO}</p></div>
   <button class="btn-link perigo centro" onclick="apagarTudo()">Apagar todos os dados</button>
-  <p class="sub centro" style="margin-bottom:10px">Fit · versão 0.1 (protótipo)</p>`;
+  <p class="sub centro" style="margin-bottom:10px">Fit · versão 0.2 (protótipo)</p>`;
 }
 function salvarPerfil(ev) {
   ev.preventDefault();
@@ -955,7 +1334,10 @@ function importar(inp) {
 function apagarTudo() { confirmar('Apagar TODOS os dados (perfil, planos, histórico e avaliações)? Isso não pode ser desfeito.', () => { S = novoEstado(); save(); tela = 'hoje'; sub = {}; pararDescanso(); render(); }, 'Apagar tudo'); }
 
 // ---------- Gráficos (canvas) ----------
-function desenharGraficos() { document.querySelectorAll('canvas[data-g]').forEach(c => desenhar(c, graficos[c.dataset.g] || [])); }
+function desenharGraficos() {
+  document.querySelectorAll('canvas[data-g]').forEach(c => { const g = graficos[c.dataset.g] || []; if (g.barras) desenharBarras(c, g.barras, g.un); else desenhar(c, g); });
+  document.querySelectorAll('canvas[data-rota]').forEach(c => { const r = S.corridas.find(x => x.id === c.dataset.rota); if (r) desenharRota(c, r.pontos); });
+}
 function desenhar(c, pts) {
   const dpr = window.devicePixelRatio || 1, w = c.clientWidth, hh = c.clientHeight;
   if (!w || !pts.length) return;
@@ -992,6 +1374,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 if (S.atual) tela = 'treino';
+if (S.corridaAtual) { tela = 'correndo'; S.corridaAtual.rodando = false; save(); }
 render();
 </script>
 </body>

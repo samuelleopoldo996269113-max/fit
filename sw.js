@@ -1,7 +1,7 @@
 // Service worker do Fit: busca da internet primeiro (pra pegar atualizações)
 // e usa o cache quando estiver sem internet.
-const CACHE = 'fit-v1';
-const ARQUIVOS = ['./', 'index.html', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'fit-v2';
+const ARQUIVOS = ['./', 'index.html', 'frango3d.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARQUIVOS)));
