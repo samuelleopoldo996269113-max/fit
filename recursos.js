@@ -421,7 +421,8 @@ function checarLembretes() {
   if (!S.perfil || !R('lembretes') || !('Notification' in window) || Notification.permission !== 'granted') return;
   const agora = new Date(), hj = hojeISO(), hm = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0'), av = S.lembretes.avisos || (S.lembretes.avisos = {});
   const treinou = S.sessoes.some(s => s.data === hj) || S.corridas.some(c => c.data === hj);
-  if (hm >= (S.lembretes.treino || '18:00') && av.treino !== hj && !treinou && !S.atual) { av.treino = hj; save(); const p = planoAtivo(); notificar('Hora do treino! 💪', p ? `Hoje: ${p.dias[p.proximo % p.dias.length].nome} — seu frango está esperando 🐔` : 'Bora treinar hoje?', 'treino'); }
+  const folga = R('diasfixos') && S.diasFixos && S.diasFixos.length && !S.diasFixos.includes(agora.getDay());
+  if (hm >= (S.lembretes.treino || '18:00') && av.treino !== hj && !treinou && !S.atual && !folga) { av.treino = hj; save(); const p = planoAtivo(); notificar('Hora do treino! 💪', p ? `Hoje: ${p.dias[p.proximo % p.dias.length].nome} — seu frango está esperando 🐔` : 'Bora treinar hoje?', 'treino'); }
   if (S.lembretes.agua) for (const hh of [10, 13, 16, 19]) {
     const k = hj + '-' + hh;
     if (agora.getHours() === hh && av.agua !== k) { av.agua = k; save(); const c = S.agua.data === hj ? S.agua.copos : 0, m = metaAgua(); if (c < m * (hh - 7) / 13) notificar('Bebe uma água 💧', `Você está em ${fmtN(c * .25, 2)} L de ${fmtN(m * .25, 1)} L hoje.`, 'agua'); }
