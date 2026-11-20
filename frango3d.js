@@ -16,11 +16,11 @@ function ik(a,c,l1,l2,pole){
   return add(a,add(mul(dir,l1*cosA),mul(p,l1*sinA)));
 }
 const L={coxa:.45,canela:.43,braco:.30,ante:.27,tronco:.52};
-let F={gord:.35,musc:.5,galo:true};
+let F={gord:.35,musc:.5,galo:true,tipo:'frango',vesgo:false,escala:1,cor:[.97,.96,.92]};
 
 function corpo(P,M){
   const o=[],g=n=>M[n]==='p'?5:M[n]==='s'?6:0,fr=nrm(P.frente||[0,0,1]),up=nrm(sub(P.peito,P.pelve)),gd=F.gord,mu=F.musc,k=.8+.95*mu;
-  const rb=.1+.05*gd-.02*mu;
+  const rb=(F.tipo==='pinto'?.13:.1)+.05*gd-.02*mu;
   const cintura=lv(P.pelve,P.peito,.45);
   o.push([P.pelve,cintura,rb-.005,g('abd')],[cintura,add(P.peito,mul(up,-.06)),rb+.01,g('abd')]);
   o.push([add(add(P.peito,mul(up,-.07)),[-.08,0,0]),add(add(P.peito,mul(up,-.07)),[.08,0,0]),.105+.025*mu+.02*gd,g('peito')]); // caixa torácica
@@ -32,18 +32,21 @@ function corpo(P,M){
   if(mu>.25&&gd<.6) for(const f of [.32,.52]) for(const x of [-1,1]) o.push([add(add(lv(P.pelve,P.peito,f),mul(fr,rb-.005)),[x*.038,0,0]),null,.03+.012*mu,g('abd')]); // abdômen
   o.push([P.qE,P.qD,.085+.04*gd,g('gluteo')]);
   const tr=mul(fr,-1);
-  for(const [dx,dy] of [[-.06,.04],[0,.11],[.06,.04]]) o.push([add(P.pelve,mul(tr,.08)),add(P.pelve,add(mul(tr,.25),add(mul(up,dy+.08),[dx,0,0]))),.035,1]);
-  o.push([P.peito,P.cabeca,.065+.035*mu,0],[add(P.cabeca,mul(up,-.03)),add(P.cabeca,mul(up,.03)),.125-.01*mu,0]);
-  const bico=add(P.cabeca,mul(fr,.12));
+  const pinto=F.tipo==='pinto';
+  if(!pinto) for(const [dx,dy] of [[-.06,.04],[0,.11],[.06,.04]]) o.push([add(P.pelve,mul(tr,.08)),add(P.pelve,add(mul(tr,.25),add(mul(up,dy+.08),[dx,0,0]))),.035,1]);
+  o.push([P.peito,P.cabeca,.065+.035*mu,0],[add(P.cabeca,mul(up,-.03)),add(P.cabeca,mul(up,.03)),pinto?.19:.125-.01*mu,0]);
+  const bico=add(P.cabeca,mul(fr,pinto?.17:.12));
   o.push([bico,add(bico,add(mul(fr,.09),mul(up,-.035))),.03,1],[bico,add(bico,mul(fr,.05)),.046,1]);
-  o.push([add(add(P.cabeca,mul(fr,.11)),mul(up,-.1)),add(add(P.cabeca,mul(fr,.1)),mul(up,-.14)),F.galo?.032:.02,2]);
-  const cs=F.galo?[.05,.068,.055]:[.028,.034,.028];
-  [-.07,.0,.07].forEach((d,i)=>o.push([add(add(P.cabeca,mul(up,.145-Math.abs(d)*.3)),mul(fr,d)),null,cs[i],2]));
+  if(!pinto) o.push([add(add(P.cabeca,mul(fr,.11)),mul(up,-.1)),add(add(P.cabeca,mul(fr,.1)),mul(up,-.14)),F.galo?.032:.02,2]);
+  if(pinto) o.push([add(P.cabeca,mul(up,.18)),add(add(P.cabeca,mul(up,.25)),mul(fr,-.04)),.02,1]); // topetinho
+  else{const cs=F.galo?[.05,.068,.055]:[.028,.034,.028];
+  [-.07,.0,.07].forEach((d,i)=>o.push([add(add(P.cabeca,mul(up,.145-Math.abs(d)*.3)),mul(fr,d)),null,cs[i],2]));}
   for(const x of [-1,1]){
-    const e=add(add(add(P.cabeca,mul(fr,.1)),mul(up,.03)),[x*.07,0,0]);
-    o.push([e,null,.04,3],[add(add(e,mul(fr,.028)),[-x*.008,0,0]),null,.019,4]);
+    const e=pinto?add(add(add(P.cabeca,mul(fr,.155)),mul(up,.05)),[x*.08,0,0]):add(add(add(P.cabeca,mul(fr,.1)),mul(up,.03)),[x*.07,0,0]);
+    const vz=F.vesgo?(x<0?[.016,.012,0]:[.004,-.014,0]):[-x*.008,0,0]; // sequelado: um olho pra cada lado
+    o.push([e,null,pinto?.05:.04,3],[add(add(e,mul(fr,pinto?.035:.028)),vz),null,pinto?.022:.019,4]);
     // sobrancelha brava (ponta de dentro mais baixa)
-    o.push([add(add(e,mul(up,.065)),add(mul(fr,.02),[x*.035,0,0])),add(add(e,mul(up,.035)),add(mul(fr,.035),[-x*.035,0,0])),.013,4]);
+    if(!pinto&&!F.vesgo) o.push([add(add(e,mul(up,.065)),add(mul(fr,.02),[x*.035,0,0])),add(add(e,mul(up,.035)),add(mul(fr,.035),[-x*.035,0,0])),.013,4]);
   }
   for(const s of ['E','D']){
     o.push([add(lv(P['q'+s],P['joe'+s],.3),mul(fr,.012)),null,.065*k+.035*gd,g('coxa')],[P['q'+s],P['joe'+s],.05*k+.025*gd,g('coxa')]);
@@ -178,6 +181,9 @@ const POSES={
    const om=[0,h,-.45];P.peito=om;P.pelve=[0,h-.06,.12];P.cabeca=add(om,[0,.06,-.27]);
    for(const [s,x] of [['E',-1],['D',1]]){P['tor'+s]=[x*.1,.06,.88];P['q'+s]=add(P.pelve,[x*.1,0,0]);P['joe'+s]=lv(P['q'+s],P['tor'+s],.5);P['ombro'+s]=add(om,[x*.19,0,0]);P['cot'+s]=[x*.19,.05,-.45];P['pun'+s]=[x*.12,.05,-.72];}
    return {P,carga:{caps:[],discos:[]}};},
+ flex(p,o,t){const P={};emPe(P);const r=Math.sin((t||0)*2.2)*.5+.5;
+   for(const [s,x] of [['E',-1],['D',1]]){P['cot'+s]=add(P['ombro'+s],[x*L.braco*.97,.04+.03*r,.02]);P['pun'+s]=add(P['cot'+s],[-x*.06,L.ante*.95,.05+.04*r]);}
+   return {P,carga:{caps:[],discos:[]}};},
  andar(p,o,t){const P={},w=(t||0)*Math.PI*2/1.1,rap=o.rapido?1.4:1;
    const ang=s=>Math.sin(w+(s==='E'?0:Math.PI))*.38*rap;
    const hip=[0,.98+Math.abs(Math.sin(w))*.02*rap,0];P.pelve=hip;P.qE=add(hip,[-.1,0,0]);P.qD=add(hip,[.1,0,0]);
@@ -188,7 +194,7 @@ const POSES={
    for(const [s,x] of [['E',-1],['D',1]]){const a=-ang(s)*1.2;P['cot'+s]=add(P['ombro'+s],[x*.03,-L.braco*Math.cos(a),L.braco*Math.sin(a)]);const fb=o.rapido?1.4:.3;P['pun'+s]=add(P['cot'+s],[0,-L.ante*Math.cos(a+fb),L.ante*Math.sin(a+fb)]);}
    return {P,carga:{caps:[],discos:[]}};}
 };
-const CICLO={andar:true}; // animação contínua (sem fase de descida/subida)
+const CICLO={andar:true,flex:true}; // animação contínua (sem fase de descida/subida)
 
 // exercício -> [família, opções]
 const MAPA={
@@ -218,7 +224,7 @@ const MAPA={
 const DESTAQUE={peito:{peito:'p',triceps:'s',ombro:'s'},costas:{costas:'p',braco:'s'},ombro:{ombro:'p',triceps:'s'},biceps:{braco:'p',ante:'s'},triceps:{triceps:'p',braco:'s'},
  antebraco:{ante:'p'},trapezio:{ombro:'p'},quadriceps:{coxa:'p',gluteo:'s'},posterior:{coxa:'p',gluteo:'s'},gluteo:{gluteo:'p',coxa:'s'},panturrilha:{pant:'p'},
  abdomen:{abd:'p'},lombar:{abd:'s',gluteo:'s'},cardio:{coxa:'s',pant:'s'}};
-const ALVO={puxada:[0,1.12,0],desenv:[0,1.08,0],supino:[0,.62,.15],flexao:[0,.35,.15],ponte:[0,.3,-.1],abdominal:[0,.35,.1],prancha:[0,.3,.15],remada:[0,.8,0],hinge:[0,.8,0]};
+const ALVO={flex:[0,1.05,0],puxada:[0,1.12,0],desenv:[0,1.08,0],supino:[0,.62,.15],flexao:[0,.35,.15],ponte:[0,.3,-.1],abdominal:[0,.35,.1],prancha:[0,.3,.15],remada:[0,.8,0],hinge:[0,.8,0]};
 const VISTA={supino:.9,flexao:1.25,ponte:1.2,abdominal:1.2,prancha:1.25,remada:1.1,hinge:1.2,afundo:1.3,triceps:.9,andar:1.1,panturrilha:1.2};
 
 // ---------- renderização ----------
@@ -230,14 +236,14 @@ function iniciarGL(){
   NMAX=Math.max(40,Math.min(72,Math.floor((gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS)-24)/2)));
 const VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 const FS=`precision highp float;
-uniform vec2 uRes;uniform vec3 uRo,uF,uR,uU,uAlvo;uniform float uN,uBanco,uEscuro;
+uniform vec2 uRes;uniform vec3 uRo,uF,uR,uU,uAlvo;uniform float uN,uBanco,uEscuro;uniform vec3 uPena;
 uniform vec4 uA[${NMAX}],uB[${NMAX}],uDC[4],uDN[4];uniform vec3 uBmin,uBmax;
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
 float cap(vec3 p,vec3 a,vec3 b,float r){vec3 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-6),0.,1.);return length(pa-ba*h)-r;}
 float cil(vec3 p,vec3 c,vec3 n,float r,float e){vec3 q=p-c;float y=dot(q,n);vec2 d=abs(vec2(length(q-n*y),y))-vec2(r,e);return min(max(d.x,d.y),0.)+length(max(d,0.))-.01;}
 float caixa(vec3 p){vec3 c=(uBmin+uBmax)*.5,h=(uBmax-uBmin)*.5;vec3 q=abs(p-c)-h+.03;return length(max(q,0.))+min(max(q.x,max(q.y,q.z)),0.)-.03;}
 vec3 cor(float m){
- if(m<.5)return vec3(.97,.96,.92); if(m<1.5)return vec3(.98,.55,.12); if(m<2.5)return vec3(.9,.16,.16);
+ if(m<.5)return uPena; if(m<1.5)return vec3(.98,.55,.12); if(m<2.5)return vec3(.9,.16,.16);
  if(m<3.5)return vec3(1.); if(m<4.5)return vec3(.06,.03,.02); if(m<5.5)return vec3(.52,.32,.95); if(m<6.5)return vec3(.76,.68,.99);
  if(m<7.5)return vec3(.62,.64,.68); if(m<8.5)return vec3(.12,.12,.14); return vec3(.27,.14,.55);}
 bool suave(float m){return m<1.5||(m>4.5&&m<6.5);}
@@ -289,7 +295,7 @@ void main(){
   const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
   const bf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   const lp=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
-  for(const n of ['uRes','uRo','uF','uR','uU','uAlvo','uN','uBanco','uEscuro','uA','uB','uDC','uDN','uBmin','uBmax'])U[n]=gl.getUniformLocation(pr,n);
+  for(const n of ['uRes','uRo','uF','uR','uU','uAlvo','uN','uBanco','uEscuro','uA','uB','uDC','uDN','uBmin','uBmax','uPena'])U[n]=gl.getUniformLocation(pr,n);
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
   cv.addEventListener('pointerdown',e=>{arr={x:e.clientX,y:e.clientY,yaw:yawAlvo,pitch};cv.setPointerCapture(e.pointerId);});
   cv.addEventListener('pointermove',e=>{if(!arr)return;yawAlvo=arr.yaw+(e.clientX-arr.x)*.012;yaw=yawAlvo;pitch=Math.max(-.05,Math.min(.8,arr.pitch+(e.clientY-arr.y)*.006));});
@@ -310,16 +316,18 @@ function desenhar(){
   const caps=[...todas.filter(c=>c[3]>=7),...todas.filter(c=>c[3]<7)].slice(0,NMAX);
   if(!A||A.length!==NMAX*4){A=new Float32Array(NMAX*4);B=new Float32Array(NMAX*4);}
   A.fill(0);B.fill(0);
-  caps.forEach((c,i)=>{const a=c[0],b=c[1]||c[0];A.set([a[0],a[1],a[2],c[2]],i*4);B.set([b[0],b[1],b[2],c[3]],i*4);});
+  const e=F.escala||1;
+  caps.forEach((c,i)=>{const a=c[0],b=c[1]||c[0];A.set([a[0]*e,a[1]*e,a[2]*e,c[2]*e],i*4);B.set([b[0]*e,b[1]*e,b[2]*e,c[3]],i*4);});
   const dc=new Float32Array(16),dn=new Float32Array(16);
-  r.carga.discos.slice(0,4).forEach((d,i)=>{dc.set([...d[0],d[2]],i*4);dn.set([...d[1],d[3]],i*4);});
+  r.carga.discos.slice(0,4).forEach((d,i)=>{dc.set([d[0][0]*e,d[0][1]*e,d[0][2]*e,d[2]*e],i*4);dn.set([...d[1],d[3]*e],i*4);});
   for(let i=r.carga.discos.length;i<4;i++){dc.set([0,-50,0,.01],i*4);dn.set([0,1,0,.01],i*4);}
-  const alvo=ALVO[cena.fam]||[0,.9,0],dist=3.5,ro=[alvo[0]+dist*Math.sin(yaw)*Math.cos(pitch),alvo[1]+dist*Math.sin(pitch),alvo[2]+dist*Math.cos(yaw)*Math.cos(pitch)];
+  const alvo=mul(ALVO[cena.fam]||[0,.9,0],e),dist=3.5*(.55+.45*e)*(cena.fam==='flex'?1.15:1),ro=[alvo[0]+dist*Math.sin(yaw)*Math.cos(pitch),alvo[1]+dist*Math.sin(pitch),alvo[2]+dist*Math.cos(yaw)*Math.cos(pitch)];
   const Fw=nrm(sub(alvo,ro)),Rt=nrm(cross(Fw,[0,1,0])),Up=cross(Rt,Fw);
   gl.viewport(0,0,cv.width,cv.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
   gl.uniform2f(U.uRes,cv.width,cv.height);gl.uniform3fv(U.uRo,ro);gl.uniform3fv(U.uF,Fw);gl.uniform3fv(U.uR,Rt);gl.uniform3fv(U.uU,Up);gl.uniform3fv(U.uAlvo,alvo);
   gl.uniform1f(U.uN,caps.length);gl.uniform4fv(U.uA,A);gl.uniform4fv(U.uB,B);gl.uniform4fv(U.uDC,dc);gl.uniform4fv(U.uDN,dn);
-  gl.uniform1f(U.uBanco,r.banco?1:0);if(r.banco){gl.uniform3fv(U.uBmin,r.banco[0]);gl.uniform3fv(U.uBmax,r.banco[1]);}
+  gl.uniform1f(U.uBanco,r.banco?1:0);if(r.banco){gl.uniform3fv(U.uBmin,mul(r.banco[0],e));gl.uniform3fv(U.uBmax,mul(r.banco[1],e));}
+  gl.uniform3fv(U.uPena,F.cor||[.97,.96,.92]);
   gl.uniform1f(U.uEscuro,0);
   gl.drawArrays(gl.TRIANGLES,0,3);
 }
@@ -332,14 +340,35 @@ function loop(agora){
   requestAnimationFrame(loop);
 }
 // monta o frango com os dados do perfil (peso, altura, nível, sexo e treinos feitos)
-function configurar(perfil,nTreinos){
+function configurar(perfil,pontos){
   let gd=.3;
   if(perfil&&perfil.peso&&perfil.altura){const imc=perfil.peso/Math.pow(perfil.altura/100,2);gd=imc<=20?0:imc<25?(imc-20)/5*.3:imc<30?.3+(imc-25)/5*.4:Math.min(1,.7+(imc-30)/10*.3);}
-  const base=({iniciante:0,intermediario:.45,avancado:.8})[perfil&&perfil.nivel]??.3;
-  F={gord:gd,musc:Math.min(1,base+Math.min(.2,(nTreinos||0)*.004)),galo:!(perfil&&perfil.sexo==='f')};
+  const N=NIVEIS[nivelDe(pontos||0)];
+  F={gord:gd*(N.tipo==='pinto'?.6:1),musc:N.musc,galo:N.tipo==='galo'&&!(perfil&&perfil.sexo==='f'),tipo:N.tipo,vesgo:!!N.vesgo,escala:N.escala,cor:N.cor};
   return F;
 }
+// níveis: tipo, cor, músculo, gordura base, escala
+const NIVEIS=[
+ {nome:'Pinto Sequelado',emoji:'🐣',pts:0,tipo:'pinto',vesgo:true,musc:0,escala:.62,cor:[1,.86,.3]},
+ {nome:'Pintinho Mais ou Menos',emoji:'🐥',pts:5,tipo:'pinto',musc:.05,escala:.68,cor:[1,.84,.25]},
+ {nome:'Pintinho Marrento',emoji:'🐥',pts:12,tipo:'pinto',musc:.18,escala:.74,cor:[1,.82,.22]},
+ {nome:'Frango Magrelo',emoji:'🐔',pts:20,tipo:'frango',musc:0,escala:.86,cor:[.97,.96,.92]},
+ {nome:'Frango de Academia',emoji:'🐔',pts:35,tipo:'frango',musc:.25,escala:.9,cor:[.97,.96,.92]},
+ {nome:'Frango Marombeiro',emoji:'🐔',pts:50,tipo:'frango',musc:.45,escala:.94,cor:[.97,.96,.92]},
+ {nome:'Galo Sequelado',emoji:'🐓',pts:75,tipo:'galo',vesgo:true,musc:.55,escala:1,cor:[.97,.96,.92]},
+ {nome:'Galo Treinado',emoji:'🐓',pts:100,tipo:'galo',musc:.7,escala:1,cor:[.97,.96,.92]},
+ {nome:'Galo Monstro',emoji:'🐓',pts:150,tipo:'galo',musc:.9,escala:1.04,cor:[.97,.96,.92]},
+ {nome:'Galo Lenda',emoji:'👑',pts:250,tipo:'galo',musc:1,escala:1.08,cor:[1,.84,.35]}
+];
+function nivelDe(pts){let i=0;for(let k=0;k<NIVEIS.length;k++)if(pts>=NIVEIS[k].pts)i=k;return i;}
 window.Frango={
+  NIVEIS,nivelDe,
+  mostrar(el){ // frango comemorando (para a tela de nível)
+    if(!gl&&!iniciarGL())return false;
+    cena={fam:'flex',op:{},M:{},ciclo:true,fixo:false,el};
+    el.innerHTML='<div class="frango-giro">↔ arraste para girar</div>';el.appendChild(cv);
+    yaw=yawAlvo=.35;pitch=.15;tempo=0;ult=0;tamanho();
+    if(!ativo){ativo=true;requestAnimationFrame(loop);}return true;},
   tem:id=>!!MAPA[id],
   configurar,
   montar(el,exId,grupo){

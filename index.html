@@ -179,6 +179,7 @@ canvas.grafico{width:100%;height:190px;display:block;margin:8px 0}
 <div id="toast" class="toast hidden"></div>
 
 <script src="frango3d.js"></script>
+<script src="recursos.js"></script>
 <script>
 'use strict';
 
@@ -547,6 +548,7 @@ function teveRecorde() {
   return false;
 }
 function sugestao(exId, reps) {
+  const sen = sugestaoSensacao(exId, reps); if (sen) return sen;
   const ult = ultimaVez(exId), f = faixa(reps);
   if (!ult || !f) return null;
   if (!ult.series.every(y => (num(y.reps) || 0) >= f[1])) return null;
@@ -556,7 +558,7 @@ function sugestao(exId, reps) {
   return `💡 Na última vez você bateu ${f[1]} reps em todas as séries. Hoje tente <b>${fmtN(kg + inc)} kg</b>!`;
 }
 function datasTreino() { const s = new Set(S.sessoes.map(x => x.data)); S.manuais.forEach(d => s.add(d)); (S.corridas || []).forEach(c => s.add(c.data)); return s; }
-function inicioSemana(d) { const x = new Date(d); x.setDate(x.getDate() - (x.getDay() + 6) % 7); x.setHours(0,0,0,0); return x; }
+function inicioSemana(d) { const x = new Date(d); x.setDate(x.getDate() - x.getDay()); x.setHours(0,0,0,0); return x; } // semana de domingo a sábado
 function stats() {
   const ds = [...datasTreino()].map(parseISO), hoje = new Date(), meta = S.perfil?.dias || 3;
   const ini = inicioSemana(hoje);
@@ -612,7 +614,8 @@ function render() {
   aplicarTema();
   const app = $('#app');
   document.body.classList.toggle('em-treino', tela === 'treino');
-  if (!S.perfil) { app.innerHTML = telaBoasVindas(); return; }
+  prepararEstado();
+  if (!S.perfil) { app.innerHTML = S.introVista ? telaBoasVindas() : telaIntro(); return; }
   if (!S.consent || S.consent.termos !== VERSAO_TERMOS) { app.innerHTML = telaConsentimento(); return; }
   if (tela === 'treino' && !S.atual) tela = 'hoje';
   if (tela === 'treino') { app.innerHTML = telaTreino(); return; }
@@ -625,6 +628,7 @@ function render() {
   const corpo = ({hoje:telaHoje, treinos:telaTreinos, progresso:telaProgresso, saude:telaSaude, perfil:telaPerfil, corrida:telaCorrida})[tela]();
   app.innerHTML = `<header class="topo">${topo}</header><main class="conteudo">${S.atual ? `<div class="banner" onclick="ir('treino')">⏱️ Treino em andamento — toque para continuar</div>` : ''}${S.corridaAtual ? `<div class="banner" onclick="ir('correndo')">🏃 Corrida em andamento — toque para voltar</div>` : ''}${corpo}</main>${nav()}`;
   requestAnimationFrame(desenharGraficos);
+  if (tela === 'hoje' && !S.atual && !window._suspender) { checarDesafios(); checarResumo(); atualizarConfigSW(); }
 }
 
 // ---------- Formulários ----------
@@ -757,6 +761,8 @@ function telaHoje() {
       <b>${h(d.nome)} · ${h(d.foco)}</b><div class="sub">${d.exercicios.length} exercícios · ~${duracaoEst(d)} min</div></div>
       <button class="play" onclick="iniciarTreino('${p.id}',${di})" title="Começar">▶</button></div>`;
   }
+  if (R('rapido')) treino += `<button class="btn-link centro" style="margin-top:-6px" onclick="iniciarTreinoRapido()">⚡ Sem tempo? Treino rápido de 15–20 min</button>`;
+  treino = cardDeload() + bannerDores() + treino + cardNivel();
   const m = metaAgua(), c = S.agua.copos, n = numerosCorpo(), st2 = stats();
   const kmSem = kmSemana();
   const tile = (ic, val, rot, alvo, extra = '') => `<div class="tile" ${alvo ? `onclick="ir('${alvo}')"` : ''}><span>${ic}</span><b>${val}</b><small>${rot}</small>${extra}</div>`;
@@ -777,6 +783,7 @@ function telaHoje() {
     ${tile('🍗', n.prot ? n.prot : '—', 'proteína por dia (g)', 'saude')}
     ${n.cintura || n.gordura ? tile('📐', [n.cintura && fmtN(n.cintura) + ' cm', n.gordura && fmtN(n.gordura) + '%'].filter(Boolean).join(' · '), [n.cintura && 'cintura', n.gordura && 'gordura'].filter(Boolean).join(' · '), 'saude', varTxt(n.varCintura, 'cm', true)) : tile('📐', '—', 'cintura e % gordura', 'saude')}
     ${tile('🏃', fmtN(kmSem, 1) + ' km', 'corridas na semana', 'corrida')}
+    ${tileSono()}
   </div>`;
 }
 // números do corpo (usados na tela inicial e na Saúde)
@@ -822,7 +829,7 @@ function cardAgua() {
   <div class="linha"><button class="btn sec" onclick="agua(-1)">−</button><button class="btn" style="flex:1" onclick="agua(1)">+ 1 copo (250 ml)</button></div>
   ${c >= m ? '<p class="sub centro" style="margin-top:6px">🎉 Meta de água batida!</p>' : ''}</div>`;
 }
-function agua(n) { S.agua.copos = Math.max(0, S.agua.copos + n); save(); render(); }
+function agua(n) { S.agua.copos = Math.max(0, S.agua.copos + n); S.aguaHist[S.agua.data] = S.agua.copos; save(); render(); }
 
 // ---------- Tela: Treinos ----------
 function telaTreinos() {
@@ -831,7 +838,7 @@ function telaTreinos() {
   if (aba === 'exercicios') return html + telaBiblioteca();
   const aberto = sub.plano && S.planos.find(x => x.id === sub.plano);
   if (aberto) return html + telaPlano(aberto);
-  html += `<button class="btn grande" onclick="abrirNovoPlano()">＋ Montar novo plano</button><button class="btn sec grande" style="margin-top:0" onclick="ir('corrida')">🏃 Corrida e caminhada</button>`;
+  html += `<button class="btn grande" onclick="abrirNovoPlano()">＋ Montar novo plano</button><button class="btn sec grande" style="margin-top:0" onclick="ir('corrida')">🏃 Corrida e caminhada</button>${R('personal') ? '<button class="btn-link centro" onclick="importarPlano()">📥 Importar plano de um personal (código)</button>' : ''}`;
   html += S.planos.length ? S.planos.map(p => `<div class="card plano ${p.id===S.ativo?'ativo':''}" onclick="setSub('plano','${p.id}')">
     <div class="linha"><h3>${h(p.nome)}</h3>${p.id===S.ativo?'<span class="tag">ATIVO</span>':''}</div>
     <div class="sub">${OBJ[p.cfg.objetivo]} · ${NIVEL[p.cfg.nivel]} · ${p.cfg.dias}x/semana · ${h(p.divisao)}</div></div>`).join('')
@@ -843,7 +850,7 @@ function telaPlano(p) {
   <div class="card"><h2>${h(p.nome)}</h2>
   <div class="sub">${OBJ[p.cfg.objetivo]} · ${NIVEL[p.cfg.nivel]} · ${p.cfg.dias}x/semana · ${LOCAL[p.cfg.local]} · ${h(p.divisao)}${p.cfg.limitacoes.length ? ' · cuidado com: ' + p.cfg.limitacoes.map(l => LIMIT[l].toLowerCase()).join(', ') : ''}</div>
   <div class="acoes">${p.id !== S.ativo ? `<button class="btn" onclick="ativarPlano('${p.id}')">Usar este plano</button>` : '<span class="tag" style="align-self:center">PLANO ATIVO</span>'}
-  <button class="btn sec" onclick="renomearPlano('${p.id}')">Renomear</button><button class="btn sec" style="color:var(--perigo)" onclick="excluirPlano('${p.id}')">Excluir</button></div></div>
+  ${R('personal') ? `<button class="btn sec" onclick="enviarPlano('${p.id}')">📤 Enviar</button>` : ''}<button class="btn sec" onclick="renomearPlano('${p.id}')">Renomear</button><button class="btn sec" style="color:var(--perigo)" onclick="excluirPlano('${p.id}')">Excluir</button></div></div>
   ${p.dias.map((d, di) => `<div class="card"><h3>${h(d.nome)} — ${h(d.foco)}</h3><div class="sub">~${duracaoEst(d)} min</div>
     ${d.exercicios.map((x, ei) => { const ex = EXM[x.exId]; return `<div class="ex-linha"><div class="ex-info" onclick="verExercicio('${x.exId}')"><b>${h(ex.nome)}</b><small>${GRUPOS[ex.g]} · ${x.series}×${h(x.reps)}${x.descanso ? ` · descanso ${x.descanso}s` : ''}</small></div>
       <div class="ex-btns"><button title="Como fazer" onclick="verExercicio('${x.exId}')">${window.Frango && Frango.tem(x.exId) ? '🎬' : '📄'}</button><button title="Editar séries" onclick="editarPrescricao('${p.id}',${di},${ei})">✏️</button><button title="Trocar" onclick="trocarExercicio('${p.id}',${di},${ei})">🔄</button><button title="Remover" onclick="removerExercicio('${p.id}',${di},${ei})">🗑️</button></div></div>`; }).join('')}
@@ -862,7 +869,7 @@ function verExercicio(id) {
   ${x.ev.length ? `<p class="aviso">⚠️ Cuidado se tiver dor ou lesão no(a): ${x.ev.map(l => LIMIT[l].toLowerCase()).join(', ')}.</p>` : ''}
   ${r ? `<p>🏆 Seu recorde: <b>${fmtN(r)} kg</b></p>` : ''}
   <button class="btn sec grande" onclick="fecharModal()">Fechar</button>`);
-  if (tem3d) { try { Frango.configurar(S.perfil, S.sessoes.length); Frango.montar($('#frangoPalco'), id, x.g); } catch (err) { const p = $('#frangoPalco'); if (p) p.remove(); } }
+  if (tem3d) { try { Frango.configurar(S.perfil, pontos()); Frango.montar($('#frangoPalco'), id, x.g); } catch (err) { const p = $('#frangoPalco'); if (p) p.remove(); } }
 }
 const acharPlano = id => S.planos.find(x => x.id === id);
 function ativarPlano(id) { S.ativo = id; save(); render(); toast('Plano ativado ✅'); }
@@ -945,6 +952,7 @@ function comecar(pid, di) {
   const p = acharPlano(pid), d = p.dias[di];
   S.atual = {planoId:pid, diaIdx:di, nome:`${d.nome} — ${d.foco}`, inicio:Date.now(),
     exercicios: d.exercicios.map(x => ({exId:x.exId, reps:x.reps, descanso:x.descanso, sets:setsIniciais(x.exId, x.series)}))};
+  aplicarAjustesTreino(S.atual);
   save(); fecharModal(); tela = 'treino'; render(); window.scrollTo(0, 0);
 }
 function tempoDecorrido() { return S.atual ? fmtTempo(Math.floor((Date.now() - S.atual.inicio) / 1000)) : ''; }
@@ -961,6 +969,7 @@ function telaTreino() {
   const feitos = a.exercicios.reduce((n, x) => n + x.sets.filter(s => s.ok).length, 0);
   return `<header class="topo fixo"><button class="voltar" onclick="ir('hoje')">←</button><div style="flex:1"><h1>${h(a.nome)}</h1><small>⏱️ <span id="cron">${tempoDecorrido()}</span></small></div></header>
   <main class="conteudo">
+  ${a.deload ? '<div class="card aviso-card">🛌 <b>Semana leve:</b> metade das séries e 60% da carga.</div>' : ''}${cardAquecimento()}
   <div><div class="progresso-treino"><div style="width:${total ? feitos/total*100 : 0}%"></div></div><p class="sub centro">${feitos} de ${total} séries feitas</p></div>
   ${a.exercicios.map((x, ei) => {
     const ex = EXM[x.exId], tempo = ehTempo(ex), ult = ultimaVez(x.exId), sug = tempo ? null : sugestao(x.exId, x.reps);
@@ -969,10 +978,10 @@ function telaTreino() {
     <div class="linha" style="flex-wrap:nowrap"><h3 onclick="verExercicio('${x.exId}')">${h(ex.nome)}</h3><button class="btn-video" onclick="verExercicio('${x.exId}')">${iconeVer(x.exId)}</button><button class="btn-icone" title="Trocar exercício" onclick="trocarNoTreino(${ei})">🔄</button></div>
     <div class="sub">Meta: ${x.sets.length} × ${h(x.reps)}${x.descanso ? ` · descanso ${x.descanso}s` : ''}</div>
     ${ult ? `<div class="ultima">Última vez: ${ult.series.map(y => fmtSerie(x.exId, y)).join(', ')}</div>` : ''}
-    ${sug ? `<div class="sugestao">${sug}</div>` : ''}
+    ${x.alertaDor ? `<div class="sugestao">🩹 Atenção: este exercício pode forçar a região com dor. Use carga leve ou troque (🔄).</div>` : ''}${sug ? `<div class="sugestao">${sug}</div>` : ''}
     <div class="sets"><div class="set cab"><span>Série</span>${tempo ? '' : '<span>kg</span>'}<span>${unidade}</span><span>Feito</span></div>
     ${x.sets.map((s, si) => `<div class="set ${s.ok ? 'ok' : ''}"><span>${si+1}</span>${tempo ? '' : `<input inputmode="decimal" value="${h(s.kg)}" placeholder="0" oninput="setVal(${ei},${si},'kg',this.value)">`}<input inputmode="numeric" value="${h(s.reps)}" placeholder="${placeholder(x.reps)}" oninput="setVal(${ei},${si},'reps',this.value)"><button class="check" onclick="marcarSet(${ei},${si})">${s.ok ? '✓' : ''}</button></div>`).join('')}</div>
-    <div class="linha"><button class="btn-link" onclick="addSet(${ei})">＋ Série</button>${x.sets.length > 1 ? `<button class="btn-link" style="color:var(--txt2)" onclick="remSet(${ei})">− Série</button>` : ''}</div></div>`;
+    <div class="linha"><button class="btn-link" onclick="addSet(${ei})">＋ Série</button>${x.sets.length > 1 ? `<button class="btn-link" style="color:var(--txt2)" onclick="remSet(${ei})">− Série</button>` : ''}</div>${blocoSensacao(ei)}</div>`;
   }).join('')}
   <button class="btn grande" onclick="finalizarTreino()">🏁 Finalizar treino</button>
   <button class="btn-link perigo centro" onclick="cancelarTreino()">Descartar treino</button></main>`;
@@ -1001,7 +1010,7 @@ function trocarNoTreino(ei) {
 function cancelarTreino() { confirmar('Descartar este treino? Nada dele será salvo.', () => { S.atual = null; pararDescanso(); save(); ir('hoje'); }, 'Descartar'); }
 function finalizarTreino() {
   const a = S.atual;
-  const exs = a.exercicios.map(x => ({exId:x.exId, series:x.sets.filter(s => s.ok).map(s => ({kg:s.kg, reps:s.reps}))})).filter(x => x.series.length);
+  const exs = a.exercicios.map(x => ({exId:x.exId, rpe:x.rpe, series:x.sets.filter(s => s.ok).map(s => ({kg:s.kg, reps:s.reps}))})).filter(x => x.series.length);
   if (!exs.length) { confirmar('Nenhuma série foi marcada como feita (✓). Descartar o treino?', () => { S.atual = null; pararDescanso(); save(); ir('hoje'); }, 'Descartar'); return; }
   const recs = [];
   exs.forEach(x => {
@@ -1015,12 +1024,16 @@ function finalizarTreino() {
   S.atual = null; pararDescanso(); save();
   const series = exs.reduce((n, x) => n + x.series.length, 0);
   const volume = exs.reduce((n, x) => n + x.series.reduce((m, y) => m + (num(y.kg) || 0) * (num(y.reps) || 0), 0), 0);
+  window._ultimoTreino = {nome:a.nome, dur, series, volume, recs:recs.length};
+  window._suspender = true;
   ir('hoje');
   modal(`<div class="centro" style="text-align:center"><div class="grande-emoji">🎉</div><h2>Treino concluído!</h2>
   <p>${dur} min · ${series} séries${volume ? ` · ${fmtN(volume, 0)} kg levantados` : ''}</p>
   ${recs.length ? `<div class="recordes"><b>🏆 Novos recordes!</b>${recs.map(r => `<div>${h(EXM[r.exId].nome)}: <b>${fmtN(r.kg)} kg</b> <span class="sub">(antes ${fmtN(r.ant)} kg)</span></div>`).join('')}</div>` : ''}
-  <button class="btn grande" onclick="fecharModal()">Fechar</button></div>`);
+  ${R('compartilhar') ? '<button class="btn sec grande" onclick="compartilharTreino()">📤 Compartilhar</button>' : ''}
+  <button class="btn grande" onclick="fecharModal();aposConcluir()">Fechar</button></div>`);
 }
+function aposConcluir() { window._suspender = false; checarDesafios(); if (!checarNivel()) checarResumo(); }
 setInterval(() => { const c = $('#cron'); if (c && S.atual) c.textContent = tempoDecorrido(); }, 1000);
 
 // ---------- Cronômetro de descanso ----------
@@ -1159,11 +1172,13 @@ function finalizarCorrida() {
   const novos = [];
   if (!recAnt.maior || r.dist > recAnt.maior.dist) novos.push('maior distância');
   if (r.dist >= 1000 && (!recAnt.ritmo || ritmoDe(r) < ritmoDe(recAnt.ritmo))) novos.push('melhor ritmo');
+  window._ultimaCorrida = r;
   ir('corrida');
   modal(`<div style="text-align:center"><div class="grande-emoji">${r.tipo === 'corrida' ? '🏃' : '🚶'}</div><h2>${r.tipo === 'corrida' ? 'Corrida' : 'Caminhada'} concluída!</h2>
   <p><b>${fmtN(r.dist/1000, 2)} km</b> · ${fmtDur(r.duracao)} · ${fmtRitmo(ritmoDe(r))} /km</p><p class="sub">${r.passos.toLocaleString('pt-BR')} passadas · ${r.kcal} kcal</p>
   ${novos.length && S.corridas.filter(x => x.tipo === r.tipo).length > 1 ? `<div class="recordes"><b>🏆 Novo recorde:</b> ${novos.join(' e ')}!</div>` : ''}
-  <button class="btn grande" onclick="fecharModal()">Fechar</button></div>`);
+  ${R('compartilhar') ? '<button class="btn sec grande" onclick="compartilharCorrida()">📤 Compartilhar</button>' : ''}
+  <button class="btn grande" onclick="fecharModal();aposConcluir()">Fechar</button></div>`);
 }
 const ritmoDe = r => r.dist > 0 ? r.duracao / (r.dist/1000) : Infinity;
 function recordesCorrida(tipo) {
@@ -1259,6 +1274,7 @@ if (S.corridaAtual) setTimeout(ligarSensores, 300);
 function telaProgresso() {
   const st = stats();
   return `<div class="grid4">${statCard('Semana', `${st.semana}/${st.meta}`)}${statCard('Mês', st.mes)}${statCard('Seq. semanas', st.seq)}${statCard('Total', st.total)}</div>
+  ${cardNivel()}${cardDesafios()}${R('resumo') ? '<button class="btn sec grande" style="margin-top:0" onclick="abrirResumo()">📬 Ver resumo desta semana</button>' : ''}
   ${calendario()}${evolucao()}${historico()}${conquistas()}`;
 }
 function calendario() {
@@ -1316,7 +1332,7 @@ function conquistas() {
 }
 
 // ---------- Tela: Saúde ----------
-function telaSaude() { return cardAgua() + cardAvaliacao() + cardNumeros(); }
+function telaSaude() { return cardAgua() + cardDores() + cardSono() + cardAvaliacao() + cardFotos() + cardNumeros(); }
 function cardAvaliacao() {
   const av = S.avaliacoes.slice().sort((a, b) => a.data.localeCompare(b.data));
   graficos.peso = av.map(a => ({l: fmtData(a.data).slice(0, 5), v: a.peso})).slice(-20);
@@ -1383,6 +1399,7 @@ function telaPerfil() {
   <button class="btn sec grande" onclick="planoDoPerfil()">⚡ Gerar novo plano com esses dados</button>
   <p class="sub" style="margin-top:8px">Os dias por semana também viram a sua meta semanal.</p></div>
   <div class="card"><h3>🎨 Aparência</h3><div class="chips">${['auto','claro','escuro'].map(t => `<button class="chip-btn ${S.tema === t ? 'on' : ''}" onclick="S.tema='${t}';save();render()">${({auto:'Automático', claro:'☀️ Claro', escuro:'🌙 Escuro'})[t]}</button>`).join('')}</div></div>
+  ${cardRecursos()}
   <div class="card"><h3>💾 Backup</h3><p class="sub">Seus dados ficam só neste aparelho. Faça backup de vez em quando para não perder nada se trocar de celular.</p>
   <div class="acoes" style="justify-content:flex-start"><button class="btn" onclick="exportar()">Exportar dados</button><label class="btn sec">Importar<input type="file" accept=".json,application/json" hidden onchange="importar(this)"></label></div></div>
   <div class="card"><h3>⚠️ Aviso importante</h3><p class="sub">${AVISO}</p></div>
@@ -1393,7 +1410,7 @@ function telaPerfil() {
   <div class="linha" onclick="retirarConsent()" style="cursor:pointer"><span style="color:var(--perigo)">Retirar consentimento</span><span class="sub">›</span></div></div>
   ${S.consent ? `<p class="sub" style="margin-top:8px">Você aceitou em ${new Date(S.consent.data).toLocaleDateString('pt-BR')}.</p>` : ''}</div>
   <button class="btn-link perigo centro" onclick="apagarTudo()">Apagar todos os dados</button>
-  <p class="sub centro" style="margin-bottom:10px">Fit · versão 0.3 (protótipo)</p>`;
+  <p class="sub centro" style="margin-bottom:10px">Fit · versão 0.4 (protótipo)</p>`;
 }
 function salvarPerfil(ev) {
   ev.preventDefault();
