@@ -114,6 +114,10 @@ canvas.rota{width:100%;height:200px;display:block;margin-top:6px;background:var(
 .frango-fase{position:absolute;left:10px;top:10px;background:rgba(76,29,149,.9);color:#fff;font-weight:700;font-size:12.5px;padding:5px 10px;border-radius:99px;z-index:1}
 .frango-giro{position:absolute;right:10px;top:10px;font-size:11.5px;color:var(--txt2);background:var(--card);padding:4px 9px;border-radius:99px;z-index:1}
 .frango-leg{display:flex;gap:12px;font-size:12px;color:var(--txt2);margin:-2px 2px 8px}.frango-leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.doc h3{font-size:15px;margin:14px 0 4px;color:var(--pri)}.doc p{font-size:14px;line-height:1.55;margin:0}
+.parq{border-bottom:1px solid var(--borda);padding:8px 0 0}.parq p{font-size:14px;margin-bottom:6px}.parq .chips{margin-bottom:8px}
+.consent{margin-top:6px}.consent .aceite a{color:var(--pri);font-weight:700}
+.btn-video{background:var(--pri-claro);color:var(--pri);border:0;border-radius:10px;height:34px;padding:0 10px;font-size:13px;font-weight:800;white-space:nowrap;flex-shrink:0}
 .hidden{display:none!important}
 .modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .modal-fundo{position:absolute;inset:0;background:rgba(0,0,0,.5)}
@@ -571,19 +575,26 @@ function aplicarTema() {
   const escuro = t === 'escuro' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('escuro', escuro);
 }
-function ir(t) { tela = t; sub = {}; render(); window.scrollTo(0, 0); }
+function ir(t) { sairArmado = 0; tela = t; sub = {}; render(); window.scrollTo(0, 0); }
 function setSub(k, v) { sub[k] = v; if (k === 'aba') sub.plano = null; render(); window.scrollTo(0, 0); }
 // ---------- Botão voltar do celular ----------
 // Fora da tela inicial (ou com janela aberta) o app guarda uma "entrada" no histórico.
 // Ao apertar voltar: fecha a janela aberta ou volta para o Início. Só fecha o app se já estiver no Início.
-let temEntrada = false;
-function garantirEntrada() { if (!temEntrada) { try { history.pushState({fit:1}, ''); } catch (err) {} temEntrada = true; } }
+let guardas = 0, sairArmado = 0;
+// O Chrome só respeita entradas de histórico criadas logo após um toque do usuário.
+// Por isso, a cada toque deixamos até 3 "camadas" de reserva: o botão voltar consome uma por vez.
+function garantirEntrada() { if (!S.perfil) return; try { while (guardas < 3) { history.pushState({fit:guardas}, ''); guardas++; } } catch (err) {} }
+document.addEventListener('click', garantirEntrada, true);
+document.addEventListener('touchend', garantirEntrada, true);
 window.addEventListener('popstate', () => {
-  temEntrada = false;
-  if (!$('#modal').classList.contains('hidden')) { fecharModal(); if (tela !== 'hoje') garantirEntrada(); return; }
-  if (tela !== 'hoje') { tela = 'hoje'; sub = {}; render(); window.scrollTo(0, 0); }
+  guardas = Math.max(0, guardas - 1);
+  if (!$('#modal').classList.contains('hidden')) { fecharModal(); return; }
+  if (tela !== 'hoje') { sairArmado = 0; tela = 'hoje'; sub = {}; render(); window.scrollTo(0, 0); return; }
+  // já está no Início: avisa e só sai se apertar de novo em até 2,5 s
+  if (Date.now() - sairArmado < 2500) { const n = guardas + 1; guardas = 0; try { history.go(-n); } catch (err) {} }
+  else { sairArmado = Date.now(); toast('Aperte voltar de novo para sair do app'); }
 });
-function modal(html) { garantirEntrada(); const m = $('#modal'); m.innerHTML = `<div class="modal-fundo" onclick="fecharModal()"></div><div class="modal-caixa">${html}</div>`; m.classList.remove('hidden'); }
+function modal(html) { const m = $('#modal'); m.innerHTML = `<div class="modal-fundo" onclick="fecharModal()"></div><div class="modal-caixa">${html}</div>`; m.classList.remove('hidden'); }
 function fecharModal() { try { window.Frango && Frango.parar(); } catch (err) {} const m = $('#modal'); m.classList.add('hidden'); m.innerHTML = ''; }
 function confirmar(msg, fn, txt = 'Confirmar') {
   window._conf = fn;
@@ -599,10 +610,10 @@ function nav() {
 
 function render() {
   aplicarTema();
-  if (S.perfil && tela !== 'hoje') garantirEntrada();
   const app = $('#app');
   document.body.classList.toggle('em-treino', tela === 'treino');
   if (!S.perfil) { app.innerHTML = telaBoasVindas(); return; }
+  if (!S.consent || S.consent.termos !== VERSAO_TERMOS) { app.innerHTML = telaConsentimento(); return; }
   if (tela === 'treino' && !S.atual) tela = 'hoje';
   if (tela === 'treino') { app.innerHTML = telaTreino(); return; }
   if (tela === 'novoplano') { app.innerHTML = telaNovoPlano(); return; }
@@ -644,24 +655,93 @@ function lerForm(form) {
   return o;
 }
 
+// ---------- Termos, privacidade e saúde ----------
+// ✏️ EDITE AQUI com seus dados antes de vender o app
+const RESPONSAVEL = 'Samuel Leopoldo';
+const CONTATO = 'seuemail@exemplo.com';
+const VERSAO_TERMOS = '2026-11-20';
+const PARQ = [
+  'Algum médico já disse que você tem um problema no coração e que só deve fazer atividade física com orientação médica?',
+  'Você sente dor no peito quando faz atividade física?',
+  'No último mês, você sentiu dor no peito mesmo sem estar fazendo atividade física?',
+  'Você perde o equilíbrio por causa de tontura ou já perdeu a consciência (desmaiou)?',
+  'Você tem algum problema nos ossos ou nas articulações que pode piorar com atividade física?',
+  'Você toma algum remédio para pressão alta ou para o coração?',
+  'Existe alguma outra razão pela qual você não deveria fazer atividade física?'
+];
+const TERMOS = `<h3>1. O que é o Fit</h3><p>O Fit é um aplicativo de apoio à prática de exercícios físicos. Ele monta sugestões de treino a partir das informações que você fornece, com base em princípios gerais de treinamento, e ajuda a registrar treinos, medidas, corridas e hábitos.</p>
+<h3>2. O Fit não substitui profissionais</h3><p>O Fit <b>não é</b> um serviço médico, nutricional ou de educação física personalizada. As sugestões não substituem a avaliação e o acompanhamento de um médico, nutricionista ou profissional de educação física. Antes de começar ou mudar sua rotina de exercícios, especialmente se tiver alguma condição de saúde, procure orientação profissional.</p>
+<h3>3. Suas responsabilidades</h3><p>Ao usar o Fit, você se compromete a: (a) informar dados verdadeiros (peso, altura, idade, limitações); (b) respeitar seus limites e interromper o exercício se sentir dor, tontura, falta de ar fora do normal ou mal-estar; (c) usar equipamentos de forma segura e, quando possível, com supervisão; (d) responder com sinceridade o questionário de saúde.</p>
+<h3>4. Idade</h3><p>O Fit é destinado a maiores de 18 anos. Menores de idade só podem usar com autorização e acompanhamento dos pais ou responsáveis.</p>
+<h3>5. Corrida e localização</h3><p>Durante corridas e caminhadas o app usa o GPS do aparelho para calcular distância e ritmo. Os valores (distância, passadas, calorias) são estimativas e podem ter erros. Fique atento ao trânsito e ao ambiente — não use o celular de forma que coloque você em risco.</p>
+<h3>6. Limites de responsabilidade</h3><p>Na medida permitida pela lei, o responsável pelo Fit não responde por lesões ou danos decorrentes do uso inadequado das sugestões, de informações falsas fornecidas pelo usuário ou do descumprimento das orientações de segurança. Nada nestes termos exclui direitos garantidos pelo Código de Defesa do Consumidor.</p>
+<h3>7. Propriedade intelectual</h3><p>O nome, o personagem "frango", os textos, o código e o visual do Fit pertencem ao seu responsável. É proibido copiar ou redistribuir o app sem autorização.</p>
+<h3>8. Mudanças nos termos</h3><p>Estes termos podem ser atualizados. Quando isso acontecer, o app mostrará a nova versão e pedirá sua concordância novamente.</p>
+<h3>9. Contato e foro</h3><p>Dúvidas: ${CONTATO}. Responsável: ${RESPONSAVEL}. Fica eleito o foro do domicílio do consumidor.</p>`;
+const PRIVACIDADE = `<h3>1. Quais dados o Fit usa</h3><p>Nome, idade, sexo, peso, altura, objetivo, nível, limitações físicas, respostas do questionário de saúde, treinos, cargas, medidas corporais, consumo de água e, durante corridas, sua localização (GPS) e o sensor de movimento para contar passadas.</p>
+<h3>2. Dados de saúde (dados sensíveis)</h3><p>Peso, medidas, limitações físicas e respostas do questionário são considerados <b>dados pessoais sensíveis</b> pela LGPD (Lei 13.709/2018). Eles só são usados com o seu consentimento específico, para as finalidades abaixo.</p>
+<h3>3. Para que usamos</h3><p>Montar e ajustar seus treinos; calcular números como IMC, calorias e proteína; mostrar sua evolução; adaptar o personagem 3D ao seu perfil; registrar corridas.</p>
+<h3>4. Onde ficam os dados</h3><p>Nesta versão, <b>todos os dados ficam guardados apenas no seu aparelho</b>. Nada é enviado para servidores, vendido ou compartilhado com terceiros. A localização só é usada enquanto uma corrida ou caminhada estiver em andamento.</p>
+<h3>5. Seus direitos</h3><p>Você pode, a qualquer momento: ver e corrigir seus dados no Perfil; exportar uma cópia (Backup); apagar tudo em "Apagar todos os dados"; e retirar seu consentimento — nesse caso o app deixa de funcionar até você consentir de novo.</p>
+<h3>6. Segurança</h3><p>Como os dados ficam no aparelho, proteja seu celular com senha ou biometria. Arquivos de backup exportados ficam sob sua responsabilidade.</p>
+<h3>7. Contato</h3><p>Responsável pelos dados: ${RESPONSAVEL} — ${CONTATO}.</p>`;
+function abrirDoc(qual) { modal(`<h2>${qual === 'termos' ? 'Termos de Uso' : 'Política de Privacidade'}</h2><p class="sub">Versão ${fmtData(VERSAO_TERMOS)}</p><div class="doc">${qual === 'termos' ? TERMOS : PRIVACIDADE}</div><button class="btn grande" onclick="fecharModal()">Fechar</button>`); }
+function blocoConsentimento() {
+  return `<div class="consent">
+  <label class="aceite"><input type="checkbox" name="c_termos" value="1"> <span>Li e aceito os <a href="#" onclick="event.preventDefault();abrirDoc('termos')">Termos de Uso</a> e a <a href="#" onclick="event.preventDefault();abrirDoc('privacidade')">Política de Privacidade</a>.</span></label>
+  <label class="aceite"><input type="checkbox" name="c_saude" value="1"> <span>Autorizo o uso dos meus dados de saúde (peso, medidas, limitações e questionário) <b>somente</b> para montar e acompanhar meus treinos. Eles ficam guardados apenas neste aparelho.</span></label>
+  <label class="aceite"><input type="checkbox" name="c_aviso" value="1"> <span>Entendi que o Fit não substitui médico nem profissional de educação física, e que devo parar o exercício se sentir dor ou mal-estar.</span></label></div>`;
+}
+function blocoParq(resp) {
+  return `<h3>Questionário de saúde</h3><p class="sub">Responda com sinceridade. São perguntas usadas no mundo todo antes de começar atividade física.</p>
+  ${PARQ.map((q, i) => `<div class="parq"><p>${i+1}. ${q}</p><div class="chips">${chips('parq' + i, {nao:'Não', sim:'Sim'}, resp ? (resp[i] ? 'sim' : 'nao') : '')}</div></div>`).join('')}`;
+}
+function lerConsent(form) {
+  const f = new FormData(form), r = PARQ.map((_, i) => f.get('parq' + i));
+  if (r.some(x => !x)) { toast('Responda todas as perguntas do questionário de saúde'); return null; }
+  if (!f.get('c_termos') || !f.get('c_saude') || !f.get('c_aviso')) { toast('Marque as três caixas de concordância para continuar'); return null; }
+  return {consent:{termos:VERSAO_TERMOS, data:new Date().toISOString(), saude:true}, parq:{data:hojeISO(), respostas:r.map(x => x === 'sim')}};
+}
+function avisoParq(depois) {
+  window._depoisParq = depois;
+  modal(`<div style="text-align:center"><div class="grande-emoji">🩺</div><h2>Procure um médico antes</h2></div>
+  <p>Você respondeu <b>Sim</b> a pelo menos uma pergunta do questionário. Por segurança, converse com um médico antes de começar ou aumentar a intensidade dos exercícios, e leve o resultado do questionário.</p>
+  <p class="aviso">Se você já tem liberação médica, pode continuar — comece leve e respeite seus limites.</p>
+  <button class="btn grande" onclick="fecharModal();_depoisParq&&_depoisParq()">Entendi, já tenho liberação / vou procurar</button>`);
+}
+// usuários que já usavam o app antes dos termos: pedir consentimento uma vez
+function telaConsentimento() {
+  return `<header class="topo hero" style="padding-bottom:50px"><div class="logo" style="font-size:34px">🔒 Atualização</div><p>Antes de continuar, leia e aceite os termos e responda o questionário de saúde.</p></header>
+  <main class="conteudo"><form class="card" onsubmit="salvarConsent(event)">${blocoParq(S.parq && S.parq.respostas)}${blocoConsentimento()}<button class="btn grande">Continuar</button></form></main>`;
+}
+function salvarConsent(ev) {
+  ev.preventDefault(); const c = lerConsent(ev.target); if (!c) return;
+  S.consent = c.consent; S.parq = c.parq; save();
+  const fim = () => { tela = 'hoje'; render(); };
+  if (c.parq.respostas.some(Boolean)) { render(); avisoParq(fim); } else fim();
+}
+function retirarConsent() { confirmar('Retirar seu consentimento? O app vai parar de funcionar até você aceitar de novo. Seus dados continuam no aparelho (use "Apagar todos os dados" para apagar).', () => { S.consent = null; save(); render(); }, 'Retirar'); }
+
 // ---------- Tela: boas-vindas ----------
 function telaBoasVindas() {
   return `<header class="topo hero"><div class="logo">Fit 💪</div><p>Seu personal de bolso.<br>Responda algumas perguntas e eu monto seu treino.</p></header>
   <main class="conteudo"><form class="card" onsubmit="concluirBoasVindas(event)">
   <h3>Sobre você</h3>${camposPerfil({})}
   <h3>Seu treino</h3>${camposTreino({})}
-  <div class="aviso">${AVISO}</div>
-  <label class="aceite"><input type="checkbox" name="aceite" value="1"> Li e entendi o aviso acima.</label>
+  ${blocoParq()}
+  <div class="aviso">${AVISO}</div>${blocoConsentimento()}
   <button class="btn grande">Montar meu treino ⚡</button></form></main>`;
 }
 function concluirBoasVindas(ev) {
   ev.preventDefault();
-  const o = lerForm(ev.target);
-  if (!o.aceite) { toast('Marque que você leu o aviso para continuar'); return; }
+  const o = lerForm(ev.target), c = lerConsent(ev.target);
+  if (!c) return;
+  S.consent = c.consent; S.parq = c.parq;
   S.perfil = {nome:(o.nome||'').trim() || 'Atleta', sexo:o.sexo, idade:o.idade, peso:o.peso, altura:o.altura, ...cfgDe(o)};
   if (o.peso) S.avaliacoes.push({id:uid(), data:hojeISO(), peso:o.peso});
   const p = gerarPlano(cfgDe(o)); S.planos.push(p); S.ativo = p.id;
-  save(); tela = 'hoje'; render(); toast('Seu plano está pronto! 💪');
+  save(); tela = 'hoje'; render();
+  if (c.parq.respostas.some(Boolean)) avisoParq(() => toast('Seu plano está pronto! 💪')); else toast('Seu plano está pronto! 💪');
 }
 
 // ---------- Tela: Hoje ----------
@@ -766,14 +846,15 @@ function telaPlano(p) {
   <button class="btn sec" onclick="renomearPlano('${p.id}')">Renomear</button><button class="btn sec" style="color:var(--perigo)" onclick="excluirPlano('${p.id}')">Excluir</button></div></div>
   ${p.dias.map((d, di) => `<div class="card"><h3>${h(d.nome)} — ${h(d.foco)}</h3><div class="sub">~${duracaoEst(d)} min</div>
     ${d.exercicios.map((x, ei) => { const ex = EXM[x.exId]; return `<div class="ex-linha"><div class="ex-info" onclick="verExercicio('${x.exId}')"><b>${h(ex.nome)}</b><small>${GRUPOS[ex.g]} · ${x.series}×${h(x.reps)}${x.descanso ? ` · descanso ${x.descanso}s` : ''}</small></div>
-      <div class="ex-btns"><button title="Editar séries" onclick="editarPrescricao('${p.id}',${di},${ei})">✏️</button><button title="Trocar" onclick="trocarExercicio('${p.id}',${di},${ei})">🔄</button><button title="Remover" onclick="removerExercicio('${p.id}',${di},${ei})">🗑️</button></div></div>`; }).join('')}
+      <div class="ex-btns"><button title="Como fazer" onclick="verExercicio('${x.exId}')">${window.Frango && Frango.tem(x.exId) ? '🎬' : '📄'}</button><button title="Editar séries" onclick="editarPrescricao('${p.id}',${di},${ei})">✏️</button><button title="Trocar" onclick="trocarExercicio('${p.id}',${di},${ei})">🔄</button><button title="Remover" onclick="removerExercicio('${p.id}',${di},${ei})">🗑️</button></div></div>`; }).join('')}
     <div class="linha" style="margin-top:6px"><button class="btn-link" onclick="adicionarExercicio('${p.id}',${di})">＋ Adicionar exercício</button><button class="btn peq" onclick="iniciarTreino('${p.id}',${di})">▶ Treinar</button></div></div>`).join('')}`;
 }
 function telaBiblioteca() {
   const g = sub.grupo || 'peito';
   return `<div class="chips rolagem">${Object.entries(GRUPOS).map(([k, l]) => `<button class="chip-btn ${k===g?'on':''}" onclick="sub.grupo='${k}';render()">${l}</button>`).join('')}</div>
-  ${EX.filter(x => x.g === g).map(x => `<div class="card ex-bib" onclick="verExercicio('${x.id}')"><b>${h(x.nome)}</b><small>${EQ_NOME[x.eq]} · ${x.t === 'c' ? 'Composto' : 'Isolado'}${x.iso ? ' · por tempo' : ''}</small></div>`).join('')}`;
+  ${EX.filter(x => x.g === g).map(x => `<div class="card ex-bib linha" style="flex-wrap:nowrap" onclick="verExercicio('${x.id}')"><div><b>${h(x.nome)}</b><small>${EQ_NOME[x.eq]} · ${x.t === 'c' ? 'Composto' : 'Isolado'}${x.iso ? ' · por tempo' : ''}</small></div><span class="btn-video" style="display:inline-flex;align-items:center">${iconeVer(x.id)}</span></div>`).join('')}`;
 }
+function iconeVer(id) { return window.Frango && Frango.tem(id) ? '🎬 Ver' : '📄 Dicas'; }
 function verExercicio(id) {
   const x = EXM[id], r = recorde(id), tem3d = window.Frango && Frango.tem(id);
   modal(`${tem3d ? `<div class="frango-palco" id="frangoPalco"></div><div class="frango-leg"><span><i style="background:#7c3aed"></i>Principal</span><span><i style="background:#c4b5fd"></i>Auxiliar</span></div>` : ''}
@@ -885,7 +966,7 @@ function telaTreino() {
     const ex = EXM[x.exId], tempo = ehTempo(ex), ult = ultimaVez(x.exId), sug = tempo ? null : sugestao(x.exId, x.reps);
     const unidade = ex.g === 'cardio' ? 'Min' : (tempo ? 'Seg' : 'Reps');
     return `<div class="card ex-treino ${x.sets.every(s => s.ok) ? 'completo' : ''} ${tempo ? 'sem-kg' : ''}">
-    <div class="linha" style="flex-wrap:nowrap"><h3 onclick="verExercicio('${x.exId}')">${h(ex.nome)} <span class="info">ⓘ</span></h3><button class="btn-icone" title="Trocar exercício" onclick="trocarNoTreino(${ei})">🔄</button></div>
+    <div class="linha" style="flex-wrap:nowrap"><h3 onclick="verExercicio('${x.exId}')">${h(ex.nome)}</h3><button class="btn-video" onclick="verExercicio('${x.exId}')">${iconeVer(x.exId)}</button><button class="btn-icone" title="Trocar exercício" onclick="trocarNoTreino(${ei})">🔄</button></div>
     <div class="sub">Meta: ${x.sets.length} × ${h(x.reps)}${x.descanso ? ` · descanso ${x.descanso}s` : ''}</div>
     ${ult ? `<div class="ultima">Última vez: ${ult.series.map(y => fmtSerie(x.exId, y)).join(', ')}</div>` : ''}
     ${sug ? `<div class="sugestao">${sug}</div>` : ''}
@@ -1305,8 +1386,14 @@ function telaPerfil() {
   <div class="card"><h3>💾 Backup</h3><p class="sub">Seus dados ficam só neste aparelho. Faça backup de vez em quando para não perder nada se trocar de celular.</p>
   <div class="acoes" style="justify-content:flex-start"><button class="btn" onclick="exportar()">Exportar dados</button><label class="btn sec">Importar<input type="file" accept=".json,application/json" hidden onchange="importar(this)"></label></div></div>
   <div class="card"><h3>⚠️ Aviso importante</h3><p class="sub">${AVISO}</p></div>
+  <div class="card"><h3>📄 Termos e privacidade</h3>
+  <div class="dados"><div class="linha" onclick="abrirDoc('termos')" style="cursor:pointer"><span>Termos de Uso</span><span class="sub">›</span></div>
+  <div class="linha" onclick="abrirDoc('privacidade')" style="cursor:pointer"><span>Política de Privacidade</span><span class="sub">›</span></div>
+  <div class="linha" onclick="S.consent=null;save();render()" style="cursor:pointer"><span>Refazer questionário de saúde</span><span class="sub">›</span></div>
+  <div class="linha" onclick="retirarConsent()" style="cursor:pointer"><span style="color:var(--perigo)">Retirar consentimento</span><span class="sub">›</span></div></div>
+  ${S.consent ? `<p class="sub" style="margin-top:8px">Você aceitou em ${new Date(S.consent.data).toLocaleDateString('pt-BR')}.</p>` : ''}</div>
   <button class="btn-link perigo centro" onclick="apagarTudo()">Apagar todos os dados</button>
-  <p class="sub centro" style="margin-bottom:10px">Fit · versão 0.2 (protótipo)</p>`;
+  <p class="sub centro" style="margin-bottom:10px">Fit · versão 0.3 (protótipo)</p>`;
 }
 function salvarPerfil(ev) {
   ev.preventDefault();
